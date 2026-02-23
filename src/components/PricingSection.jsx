@@ -4,7 +4,7 @@ export default function PricingSection() {
     const tiers = [
         {
             name: "Starter",
-            price: "$0",
+            price: "$19",
             description: "Perfect for exploring the Notion-native sync.",
             features: [
                 "Up to 50 email syncs/month",
