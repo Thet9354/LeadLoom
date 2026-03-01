@@ -1,0 +1,1 @@
+UPDATE public.users SET notion_db_id = 'test_notion_db_123456789' WHERE id = 'd3aa2784-11a6-48e3-8bcb-9ae0abcbdaf2';SELECT * FROM users;

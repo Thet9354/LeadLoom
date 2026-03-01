@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
+
 export default function Footer() {
     return (
         <>
             {/* Final CTA Strip */}
-            <section className="bg-gray-900 py-20">
+            <section className="bg-gray-900 dark:bg-gray-950 py-20 transition-colors">
                 <div className="max-w-4xl mx-auto px-4 text-center">
                     <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
                         Ready to Stop Losing Leads?
@@ -22,7 +24,7 @@ export default function Footer() {
             </section>
 
             {/* Actual Footer */}
-            <footer className="bg-white py-12 border-t border-gray-100">
+            <footer className="bg-white dark:bg-gray-950 py-12 border-t border-gray-100 dark:border-gray-800 transition-colors">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
                         <div className="col-span-1 md:col-span-2">
@@ -30,37 +32,37 @@ export default function Footer() {
                                 <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
                                     LL
                                 </div>
-                                <span className="font-bold text-xl tracking-tight text-gray-900">LeadLoom</span>
+                                <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">LeadLoom</span>
                             </div>
-                            <p className="text-gray-500 max-w-xs leading-relaxed">
+                            <p className="text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
                                 The Notion-native edge for modern sales teams. Turn your inbox into an organized powerhouse.
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-gray-900 mb-4">Product</h4>
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-4">Product</h4>
                             <ul className="space-y-2">
-                                <li><a href="#features" className="text-gray-500 hover:text-primary transition-colors">Features</a></li>
-                                <li><a href="#pricing" className="text-gray-500 hover:text-primary transition-colors">Pricing</a></li>
-                                <li><a href="https://calendly.com/thetpine254/30min" className="text-gray-500 hover:text-primary transition-colors">Book Demo</a></li>
+                                <li><Link to="/#features" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Features</Link></li>
+                                <li><Link to="/pricing" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Pricing</Link></li>
+                                <li><a href="https://calendly.com/thetpine254/30min" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Book Demo</a></li>
                             </ul>
                         </div>
 
                         <div>
-                            <h4 className="font-bold text-gray-900 mb-4">Company</h4>
+                            <h4 className="font-bold text-gray-900 dark:text-white mb-4">Company</h4>
                             <ul className="space-y-2">
-                                <li><a href="mailto:leadloomsg@gmail.com" className="text-gray-500 hover:text-primary transition-colors">Contact</a></li>
-                                <li><a href="#" className="text-gray-500 hover:text-primary transition-colors">Privacy Policy</a></li>
-                                <li><a href="#" className="text-gray-500 hover:text-primary transition-colors">Terms of Service</a></li>
+                                <li><a href="mailto:leadloomsg@gmail.com" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Contact</a></li>
+                                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Privacy Policy</a></li>
+                                <li><a href="#" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Terms of Service</a></li>
                             </ul>
                         </div>
                     </div>
 
-                    <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between text-gray-500 text-sm">
+                    <div className="pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between text-gray-500 dark:text-gray-400 text-sm">
                         <p>&copy; {new Date().getFullYear()} LeadLoom. All rights reserved.</p>
                         <div className="mt-4 md:mt-0 flex space-x-4">
-                            <a href="https://x.com/LeadLooms" target="_blank" rel="noreferrer" className="hover:text-gray-900 transition-colors">Twitter</a>
-                            <a href="https://www.linkedin.com/in/thetpine/" target="_blank" rel="noreferrer" className="hover:text-gray-900 transition-colors">LinkedIn</a>
+                            <a href="https://x.com/LeadLooms" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">Twitter</a>
+                            <a href="https://www.linkedin.com/in/thetpine/" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">LinkedIn</a>
                         </div>
                     </div>
                 </div>
