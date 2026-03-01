@@ -392,18 +392,27 @@ async def stripe_webhook(request: Request):
             from api.database import supabase
             if supabase:
                 try:
-                    # Retrieve subscription to find the price_id
+                    # Retrieve subscription to find the price_id and trial metadata
                     sub = stripe.Subscription.retrieve(subscription_id)
                     price_id = sub['items']['data'][0]['price']['id'] if sub['items']['data'] else None
                     plan = price_id_to_plan(price_id) if price_id else "starter"
+                    
+                    trial_start = sub.get("trial_start")
                     
                     update_data = {
                         "plan_type": plan,
                         "is_pro": plan == "pro",
                         "stripe_customer_id": session_obj.get('customer'),
                     }
+                    
+                    if trial_start:
+                         from datetime import datetime, timezone
+                         # Convert stripe unix timestamp to ISO format for Supabase
+                         dt = datetime.fromtimestamp(trial_start, tz=timezone.utc)
+                         update_data["trial_start_date"] = dt.isoformat()
+                    
                     supabase.table("profiles").update(update_data).eq("id", user_id).execute()
-                    print(f"User {user_id} upgraded to {plan}.")
+                    print(f"User {user_id} upgraded to {plan}. Trial start: {bool(trial_start)}")
                 except Exception as db_e:
                     print(f"Failed to update plan in DB: {db_e}")
 
@@ -436,19 +445,27 @@ async def stripe_webhook(request: Request):
 async def poll_inbox():
     # Use environment variables securely for API calls as requested
     notion_api_key = os.environ.get("NOTION_API_KEY")
-    notion_database_id = os.environ.get("NOTION_DATABASE_ID")
-    gmail_credentials = os.environ.get("GMAIL_CREDENTIALS_JSON")
     
-    if not all([notion_api_key, notion_database_id]):
-        return JSONResponse(
-            status_code=500, 
-            content={"message": "Missing environment variables for Notion infrastructure"}
-        )
+    # We do not strictly require NOTION_DATABASE_ID here because the worker
+    # fetches each user's specific database ID from the database.
+    # We just need to ensure the worker script can run.
+    from api.worker import run_all_syncs
+    import asyncio
     
-    # Placeholder logic for Gmail <> Notion syncing
-    # googleapiclient.discovery and notion_client logic would go here
-    
-    return {"status": "success", "message": "CRON Execution Triggered: Inbox correctly synced with Notion"}
+    try:
+        # Run the sync engine (in a real production app, this should be offloaded 
+        # to a background task queue like Celery or RQ to not block the web request,
+        # but for Vercel Cron, hitting the endpoint executing synchronously is standard)
+        print("Triggering run_all_syncs() from /api/poll ...")
+        
+        # worker is synchronous, so we run it in a threadpool
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, run_all_syncs)
+        
+        return {"status": "success", "message": "CRON Execution Triggered: Active users successfully synced."}
+    except Exception as e:
+        print(f"Sync Worker Error: {e}")
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 @app.get("/api/auth/check-email")
 async def check_email(email: str):
