@@ -354,7 +354,6 @@ async def create_checkout_session(request: Request):
         if plan == "pro":
             session_params['subscription_data'] = {'trial_period_days': 14}
             session_params['payment_method_collection'] = 'always'
-            session_params['payment_intent_data'] = {'setup_future_usage': 'off_session'}
         
         checkout_session = stripe.checkout.Session.create(**session_params)
         return {"id": checkout_session.id, "url": checkout_session.url}
