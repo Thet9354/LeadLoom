@@ -4,12 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { AlertCircle, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const AppleIcon = () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.53-3.23 0-1.44.62-2.2.44-3.06-.4C3.79 16.17 4.36 9.53 8.7 9.28c1.27.06 2.15.72 2.91.76.93-.19 1.82-.88 2.83-.8 1.2.1 2.1.59 2.7 1.49-2.46 1.49-1.88 4.77.53 5.68-.5 1.28-.93 2.53-1.62 3.87ZM12.03 9.21c-.13-2.31 1.79-4.28 3.95-4.47.27 2.56-2.31 4.62-3.95 4.47Z" />
-    </svg>
-);
-
 const GoogleIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1Z" fill="#4285F4" />
@@ -218,15 +212,6 @@ export default function Signup() {
                             <GoogleIcon />
                             Continue with Google
                         </button>
-
-                        {/* <button
-                            onClick={() => handleOAuthSignUp('apple')}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-black text-white font-medium text-sm hover:bg-gray-800 transition-colors disabled:opacity-50"
-                        >
-                            <AppleIcon />
-                            Continue with Apple
-                        </button> */}
 
                     </div>
                 </div>
