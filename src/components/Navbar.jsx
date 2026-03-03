@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Settings, CreditCard, LayoutDashboard, LogOut, Sun, Moon, ChevronDown } from "lucide-react";
+import { Menu, X, Settings, CreditCard, LayoutDashboard, LogOut, Sun, Moon, ChevronDown, FileText, Shield } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { useTheme } from "../ThemeContext";
@@ -93,6 +93,13 @@ export default function Navbar({ session }) {
                                             <CreditCard size={16} /> Billing & Subscription
                                         </Link>
                                         <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                        <Link to="/terms" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <FileText size={16} /> Terms of Service
+                                        </Link>
+                                        <Link to="/privacy" onClick={() => setDropdownOpen(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                            <Shield size={16} /> Privacy Policy
+                                        </Link>
+                                        <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                                         <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
                                             {theme === "dark" ? "Light Mode" : "Dark Mode"}
@@ -168,6 +175,14 @@ export default function Navbar({ session }) {
                                 <Link to="/billing" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
                                     <CreditCard size={18} /> Billing
                                 </Link>
+                                <div className="border-t border-gray-100 dark:border-gray-800 my-2"></div>
+                                <Link to="/terms" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <FileText size={18} /> Terms of Service
+                                </Link>
+                                <Link to="/privacy" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <Shield size={18} /> Privacy Policy
+                                </Link>
+                                <div className="border-t border-gray-100 dark:border-gray-800 my-2"></div>
                                 <button onClick={toggleTheme} className="w-full flex items-center gap-3 px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800">
                                     {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />} {theme === "dark" ? "Light Mode" : "Dark Mode"}
                                 </button>

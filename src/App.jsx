@@ -13,6 +13,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 function PageWrapper({ children }) {
   return (
@@ -61,6 +63,8 @@ function App() {
           <Route path="/pricing" element={<PageWrapper><Pricing session={session} /></PageWrapper>} />
           <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
+          <Route path="/terms" element={<PageWrapper><TermsOfService /></PageWrapper>} />
+          <Route path="/privacy" element={<PageWrapper><PrivacyPolicy /></PageWrapper>} />
           <Route path="/dashboard" element={
             <PrivateRoute session={session}>
               <PageWrapper><Dashboard session={session} /></PageWrapper>
