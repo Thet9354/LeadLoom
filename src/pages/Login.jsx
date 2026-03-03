@@ -29,10 +29,25 @@ export default function Login() {
     // Navigate to dashboard after successful OAuth sign-in
     // Account linking + toast notification is handled globally by LinkToast in App.jsx
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (event === 'SIGNED_IN' && session?.user) {
                 const provider = session.user.app_metadata?.provider;
                 if (provider === 'google' || provider === 'apple') {
+                    setLoading(true);
+                    // The Gatekeeper: check if email exists in production profiles table
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('email')
+                        .eq('email', session.user.email)
+                        .single();
+
+                    if (!profile) {
+                        await supabase.auth.signOut();
+                        setError("No account found with this email. Please sign up first!");
+                        setLoading(false);
+                        return;
+                    }
+
                     navigate('/dashboard');
                 }
             }
@@ -103,44 +118,13 @@ export default function Login() {
         setError(null);
         try {
             const { error } = await supabase.auth.signInWithOAuth({
-                provider,
-                options: { redirectTo: window.location.origin + '/dashboard' },
+                provider
+                // We purposefully remove the redirect URL so that the OAuth return lands back on this Login component
+                // thus allowing the onAuthStateChange gatekeeper to intercept the sign-in before navigating to dashboard
             });
             if (error) throw error;
         } catch (err) {
             setError(err.message);
-            setLoading(false);
-        }
-    };
-
-    const handlePasskeySignIn = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const { data, error } = await supabase.auth.signInWithPasskey();
-            if (error) throw error;
-
-            if (data?.user) {
-                const userEmail = data.user.email || email;
-
-                // The Gatekeeper: check if email exists in production profiles table
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('email')
-                    .eq('email', userEmail)
-                    .single();
-
-                if (!profile) {
-                    await supabase.auth.signOut();
-                    throw new Error("No account found with this email. Please sign up first!");
-                }
-
-                // Success — redirect to dashboard
-                navigate('/dashboard');
-            }
-        } catch (err) {
-            setError(err.message || 'Failed to sign in with Passkey.');
-        } finally {
             setLoading(false);
         }
     };
@@ -233,22 +217,13 @@ export default function Login() {
                             Continue with Google
                         </button>
 
-                        {/* <button
+                        <button
                             onClick={() => handleOAuthSignIn('apple')}
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-black text-white font-medium text-sm hover:bg-gray-800 transition-colors disabled:opacity-50"
                         >
                             <AppleIcon />
                             Continue with Apple
-                        </button> */}
-
-                        <button
-                            onClick={handlePasskeySignIn}
-                            disabled={loading}
-                            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium text-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                        >
-                            <KeyRound size={18} />
-                            Continue with Passkey
                         </button>
                     </div>
                 </div>
