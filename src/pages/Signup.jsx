@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
 import { AlertCircle, KeyRound } from 'lucide-react';
@@ -26,6 +26,21 @@ export default function Signup() {
     const [error, setError] = useState(null);
     const [message, setMessage] = useState('');
     const navigate = useNavigate();
+
+    // Navigate to dashboard after successful OAuth sign-up/sign-in
+    // Account linking + toast notification is handled globally by LinkToast in App.jsx
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+                const provider = session.user.app_metadata?.provider;
+                if (provider === 'google' || provider === 'apple') {
+                    navigate('/dashboard');
+                }
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [navigate]);
 
     const handleEmailSignUp = async () => {
         setLoading(true);

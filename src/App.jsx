@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { AnimatePresence, motion } from "framer-motion";
 import { ThemeProvider } from "./ThemeContext";
+import LinkToast from "./components/LinkToast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -52,6 +53,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <LinkToast />
       <Navbar session={session} />
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>

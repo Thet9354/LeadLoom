@@ -3,7 +3,6 @@ import { supabase } from '../supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
 import { AlertCircle, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { API_URL } from '../config';
 
 const AppleIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -27,23 +26,13 @@ export default function Login() {
     const [error, setError] = useState(null);
     const navigate = useNavigate();
 
-    // Post-OAuth gatekeeper: if Google auth succeeds but user has no profile, sign them out
+    // Navigate to dashboard after successful OAuth sign-in
+    // Account linking + toast notification is handled globally by LinkToast in App.jsx
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_IN' && session?.user) {
                 const provider = session.user.app_metadata?.provider;
-                if (provider === 'google') {
-                    try {
-                        const res = await fetch(`${API_URL}/api/auth/check-email?email=${encodeURIComponent(session.user.email)}`);
-                        const data = await res.json();
-                        if (!data.exists) {
-                            await supabase.auth.signOut();
-                            setError("We couldn't find an account with this email. Please sign up first!");
-                            return;
-                        }
-                    } catch (err) {
-                        console.warn('Email check failed, allowing login:', err);
-                    }
+                if (provider === 'google' || provider === 'apple') {
                     navigate('/dashboard');
                 }
             }
