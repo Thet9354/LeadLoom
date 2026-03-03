@@ -123,6 +123,38 @@ export default function Signup() {
         }
     };
 
+    const handlePasskeySignUp = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error } = await supabase.auth.signUpWithPasskey();
+            if (error) throw error;
+
+            if (data?.user) {
+                // Production Handshake: explicitly upsert into profiles to bypass confirmation triggers
+                const userEmail = data.user.email || email || '';
+                const { error: profileError } = await supabase.from('profiles').upsert([
+                    {
+                        id: data.user.id,
+                        email: userEmail,
+                        is_pro: false
+                    }
+                ], { onConflict: 'id' });
+
+                if (profileError) {
+                    console.error("Failed to insert profile record:", profileError);
+                }
+
+                // Navigate to dashboard after success
+                navigate('/dashboard');
+            }
+        } catch (err) {
+            setError(err.message || 'Failed to register Passkey.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center py-12 px-4 transition-colors">
             <motion.div
@@ -229,6 +261,7 @@ export default function Signup() {
                         </button> */}
 
                         <button
+                            onClick={handlePasskeySignUp}
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium text-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >

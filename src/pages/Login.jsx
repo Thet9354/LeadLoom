@@ -113,6 +113,38 @@ export default function Login() {
         }
     };
 
+    const handlePasskeySignIn = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const { data, error } = await supabase.auth.signInWithPasskey();
+            if (error) throw error;
+
+            if (data?.user) {
+                const userEmail = data.user.email || email;
+
+                // The Gatekeeper: check if email exists in production profiles table
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('email')
+                    .eq('email', userEmail)
+                    .single();
+
+                if (!profile) {
+                    await supabase.auth.signOut();
+                    throw new Error("No account found with this email. Please sign up first!");
+                }
+
+                // Success — redirect to dashboard
+                navigate('/dashboard');
+            }
+        } catch (err) {
+            setError(err.message || 'Failed to sign in with Passkey.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center py-12 px-4 transition-colors">
             <motion.div
@@ -211,6 +243,7 @@ export default function Login() {
                         </button> */}
 
                         <button
+                            onClick={handlePasskeySignIn}
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium text-sm border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
                         >
