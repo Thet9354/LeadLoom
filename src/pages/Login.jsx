@@ -41,6 +41,17 @@ export default function Login() {
         return () => subscription.unsubscribe();
     }, [navigate]);
 
+    // Handle bfcache (browser back button) restoring the page in a loading state
+    useEffect(() => {
+        const handlePageShow = (event) => {
+            if (event.persisted) {
+                setLoading(false);
+            }
+        };
+        window.addEventListener('pageshow', handlePageShow);
+        return () => window.removeEventListener('pageshow', handlePageShow);
+    }, []);
+
     const handleEmailSignIn = async () => {
         setLoading(true);
         setError(null);
