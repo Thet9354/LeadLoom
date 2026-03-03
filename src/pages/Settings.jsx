@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Mail, Database, CheckCircle, Save, AlertCircle } from "lucide-react";
+import { Mail, Database, CheckCircle, Save, AlertCircle, Shield, Monitor, Smartphone, LogOut } from "lucide-react";
 import Breadcrumb from "../components/Breadcrumb";
 import { API_URL } from '../config';
+import { supabase } from '../supabaseClient';
 
 export default function SettingsPage({ session }) {
     const [notionDbId, setNotionDbId] = useState("");
@@ -9,6 +10,40 @@ export default function SettingsPage({ session }) {
     const [isSaving, setIsSaving] = useState(false);
     const [toast, setToast] = useState(null);
     const [gmailConnected, setGmailConnected] = useState(false);
+    const [currentDevice, setCurrentDevice] = useState({ os: "Loading...", browser: "", location: "Fetching location..." });
+    const [isSigningOutOthers, setIsSigningOutOthers] = useState(false);
+
+    useEffect(() => {
+        // Parse basic user agent
+        const ua = navigator.userAgent;
+        let os = "Unknown OS";
+        let browser = "Unknown Browser";
+
+        if (ua.includes("Mac OS")) os = "macOS";
+        else if (ua.includes("Windows")) os = "Windows";
+        else if (ua.includes("Linux")) os = "Linux";
+        else if (ua.includes("Android")) os = "Android";
+        else if (ua.includes("iOS") || ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+
+        if (ua.includes("Chrome") && !ua.includes("Edg")) browser = "Chrome";
+        else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+        else if (ua.includes("Firefox")) browser = "Firefox";
+        else if (ua.includes("Edg")) browser = "Edge";
+
+        setCurrentDevice(prev => ({ ...prev, os, browser }));
+
+        // Attempt to fetch IP/Location securely (ignoring adblocker timeouts safely)
+        fetch('https://ipapi.co/json/')
+            .then(res => res.json())
+            .then(data => {
+                if (data.city && data.ip) {
+                    setCurrentDevice(prev => ({ ...prev, location: `${data.city}, ${data.country} • ${data.ip}` }));
+                } else {
+                    setCurrentDevice(prev => ({ ...prev, location: "Location Unavailable" }));
+                }
+            })
+            .catch(() => setCurrentDevice(prev => ({ ...prev, location: "Local Network" })));
+    }, []);
 
     useEffect(() => {
         if (!session?.user?.id) return;
@@ -57,6 +92,19 @@ export default function SettingsPage({ session }) {
             showToast("error", "Network error: " + error.message);
         } finally {
             setIsSaving(false);
+        }
+    };
+
+    const handleSignOutOthers = async () => {
+        setIsSigningOutOthers(true);
+        try {
+            const { error } = await supabase.auth.signOut({ scope: 'others' });
+            if (error) throw error;
+            showToast("success", "Successfully logged out of all other devices.");
+        } catch (error) {
+            showToast("error", "Failed to sign out other devices: " + error.message);
+        } finally {
+            setIsSigningOutOthers(false);
         }
     };
 
@@ -136,6 +184,65 @@ export default function SettingsPage({ session }) {
                             <Save size={16} />
                             {isSaving ? "Saving..." : "Save Settings"}
                         </button>
+                    </div>
+                </div>
+
+                {/* Security & Devices */}
+                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-6 mt-6">
+                    <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white mb-1">
+                        <Shield size={20} className="text-purple-500" /> Security & Devices
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">Manage your active sessions and log out of unrecognized devices.</p>
+
+                    <div className="space-y-4">
+                        {/* Current Device */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                            <div className="flex items-start gap-4 mb-4 sm:mb-0">
+                                <div className="mt-1 bg-white dark:bg-gray-800 p-2 rounded-full shadow-sm">
+                                    {currentDevice.os === "iOS" || currentDevice.os === "Android" ? (
+                                        <Smartphone size={20} className="text-gray-600 dark:text-gray-300" />
+                                    ) : (
+                                        <Monitor size={20} className="text-gray-600 dark:text-gray-300" />
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                        {currentDevice.os} • {currentDevice.browser}
+                                        <span className="text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800/50">
+                                            Current Device
+                                        </span>
+                                    </p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {currentDevice.location}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Other Devices */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+                            <div className="flex items-start gap-4 mb-4 sm:mb-0 opacity-75">
+                                <div className="mt-1 bg-gray-50 dark:bg-gray-800 p-2 rounded-full shadow-sm">
+                                    <Monitor size={20} className="text-gray-500 dark:text-gray-400" />
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-gray-900 dark:text-white">
+                                        Other Active Devices
+                                    </p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                        Remote sessions linked to your account
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleSignOutOthers}
+                                disabled={isSigningOutOthers}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 border border-gray-200 dark:border-gray-700 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium py-2 px-4 rounded-xl shadow-sm transition-all disabled:opacity-50"
+                            >
+                                <LogOut size={16} />
+                                {isSigningOutOthers ? "Signing out..." : "Sign Out"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
