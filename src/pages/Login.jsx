@@ -201,14 +201,14 @@ export default function Login() {
                             Continue with Google
                         </button>
 
-                        <button
+                        {/* <button
                             onClick={() => handleOAuthSignIn('apple')}
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl bg-black text-white font-medium text-sm hover:bg-gray-800 transition-colors disabled:opacity-50"
                         >
                             <AppleIcon />
                             Continue with Apple
-                        </button>
+                        </button> */}
 
                         <button
                             disabled={loading}
