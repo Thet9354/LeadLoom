@@ -1,9 +1,11 @@
 import { motion } from "framer-motion";
-import { Sparkles, BrainCircuit, Activity, Network, ArrowRight, Zap, Target, Lock } from "lucide-react";
+import { Sparkles, BrainCircuit, Activity, Network, ArrowRight, Zap, Target, Lock, Mail } from "lucide-react";
+import { SiGmail, SiNotion, SiSlack, SiApple, SiWhatsapp, SiSalesforce } from "react-icons/si";
+import HowItWorksSection from "../components/HowItWorksSection";
 
 export default function Features() {
     return (
-        <main className="bg-white dark:bg-gray-950 transition-colors pt-28 pb-16 min-h-screen">
+        <main className="bg-white dark:bg-gray-950 transition-colors pt-28 min-h-screen">
             {/* Header Section */}
             <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-24">
                 <motion.div
@@ -50,7 +52,7 @@ export default function Features() {
                         viewport={{ once: true, margin: "-100px" }}
                         whileHover={{ y: -5 }}
                         transition={{ duration: 0.4 }}
-                        className="md:col-span-2 relative group bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-primary/30 dark:hover:border-primary/50 transition-colors"
+                        className="md:col-span-2 relative group bg-gray-50 dark:bg-[#11131a] rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-primary/30 dark:hover:border-primary/50 transition-colors"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <div className="relative z-10 h-full flex flex-col justify-between">
@@ -64,12 +66,44 @@ export default function Features() {
                                 </p>
                             </div>
 
-                            {/* Decorative Mock Code Block */}
-                            <div className="mt-8 bg-white/80 dark:bg-gray-950/80 backdrop-blur border border-gray-100 dark:border-gray-800 rounded-xl p-4 font-mono text-sm text-gray-500 hidden sm:block">
-                                <span className="text-blue-500">const</span> <span className="text-purple-500">intent</span> = <span className="text-blue-400">analyzeThread</span>(incomingEmail);<br />
-                                <span className="text-blue-500">if</span> (intent === <span className="text-green-500">'interested'</span>) {'{'}<br />
-                                &nbsp;&nbsp;notion.pages.update({'{'} status: <span className="text-green-500">'Hot Lead'</span> {'}'});<br />
-                                {'}'}
+                            {/* Visual Abstract Thread Processing instead of code block */}
+                            <div className="mt-6 flex flex-col gap-3 relative z-10 hidden sm:flex max-w-md">
+                                <motion.div
+                                    initial={{ x: -20, opacity: 0 }}
+                                    whileInView={{ x: 0, opacity: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.6, delay: 0.2 }}
+                                    className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-sm p-3.5 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex items-center gap-4"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                                        <Mail size={18} />
+                                    </div>
+                                    <div className="flex-grow space-y-1.5">
+                                        <div className="h-2 w-32 bg-gray-200 dark:bg-gray-600 rounded-full"></div>
+                                        <div className="h-2 w-20 bg-gray-100 dark:bg-gray-700 rounded-full"></div>
+                                    </div>
+                                    <span className="text-xs font-mono text-gray-400">Raw Data</span>
+                                </motion.div>
+
+                                <div className="w-0.5 h-4 bg-gray-200 dark:bg-gray-700 ml-8"></div>
+
+                                <motion.div
+                                    initial={{ x: -20, opacity: 0 }}
+                                    whileInView={{ x: 0, opacity: 1 }}
+                                    viewport={{ once: true }}
+                                    transition={{ duration: 0.6, delay: 0.5 }}
+                                    className="bg-blue-50/80 dark:bg-primary/10 backdrop-blur-sm p-3.5 rounded-2xl border border-blue-100 dark:border-primary/30 shadow-sm flex items-center gap-4 ml-4"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white shrink-0">
+                                        <Activity size={18} />
+                                    </div>
+                                    <div className="flex-grow">
+                                        <div className="text-sm font-semibold text-gray-900 dark:text-white mb-0.5">
+                                            Intent Extracted: <span className="text-primary italic">"Interested"</span>
+                                        </div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">Signatures & history ignored</div>
+                                    </div>
+                                </motion.div>
                             </div>
                         </div>
                     </motion.div>
@@ -81,7 +115,7 @@ export default function Features() {
                         viewport={{ once: true, margin: "-100px" }}
                         whileHover={{ y: -5 }}
                         transition={{ duration: 0.4, delay: 0.1 }}
-                        className="relative group bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-primary/30 dark:hover:border-primary/50 transition-colors"
+                        className="relative group bg-gray-50 dark:bg-[#11131a] rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-primary/30 dark:hover:border-primary/50 transition-colors"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <div className="relative z-10 h-full flex flex-col">
@@ -105,7 +139,7 @@ export default function Features() {
                         viewport={{ once: true, margin: "-100px" }}
                         whileHover={{ y: -5 }}
                         transition={{ duration: 0.4, delay: 0.2 }}
-                        className="relative group bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-primary/30 dark:hover:border-primary/50 transition-colors"
+                        className="relative group bg-gray-50 dark:bg-[#11131a] rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-primary/30 dark:hover:border-primary/50 transition-colors"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <div className="relative z-10 h-full flex flex-col">
@@ -126,7 +160,7 @@ export default function Features() {
                         viewport={{ once: true, margin: "-100px" }}
                         whileHover={{ y: -5 }}
                         transition={{ duration: 0.4, delay: 0.3 }}
-                        className="md:col-span-2 relative group bg-gray-50 dark:bg-gray-900/50 rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-red-500/30 dark:hover:border-red-500/50 transition-colors"
+                        className="md:col-span-2 relative group bg-gray-50 dark:bg-[#11131a] rounded-3xl p-8 border border-gray-100 dark:border-white/5 overflow-hidden hover:border-red-500/30 dark:hover:border-red-500/50 transition-colors"
                     >
                         <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         <div className="relative z-10 h-full flex flex-col justify-between">
@@ -142,7 +176,7 @@ export default function Features() {
 
                             {/* Decorative Progress Bar Graphic */}
                             <div className="mt-8 flex items-center gap-4">
-                                <div className="h-2 flex-grow bg-white dark:bg-gray-800 rounded-full overflow-hidden">
+                                <div className="h-2 flex-grow bg-gray-200 dark:bg-[#1f222e] rounded-full overflow-hidden">
                                     <motion.div
                                         initial={{ width: "0%" }}
                                         whileInView={{ width: "75%" }}
@@ -159,7 +193,7 @@ export default function Features() {
             </div>
 
             {/* Deep Dive Section 1: The Sync Architecture */}
-            <div className="py-24 border-t border-gray-100 dark:border-gray-900 relative overflow-hidden">
+            <div className="py-24 border-t border-gray-100 dark:border-gray-900 relative overflow-hidden bg-white dark:bg-[#0a0c10]">
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,7 +208,7 @@ export default function Features() {
                                 <Target size={28} />
                             </div>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                                Flawless bi-directional synchronization.
+                                Flawless bi-directional <br /><span className="bg-gray-100 dark:bg-[#202434] px-2 rounded-lg inline-block mt-2">synchronization.</span>
                             </h2>
                             <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed mb-8">
                                 Why context-switch? Every time an email hits your inbox or a prospect replies, the exact content, sender details, and timeline are pushed instantly into your dedicated Notion workspace.
@@ -186,9 +220,9 @@ export default function Features() {
                                     "Supports unlimited Notion databases",
                                     "Enterprise-grade reliability"
                                 ].map((item, i) => (
-                                    <li key={i} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
-                                        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 flex items-center justify-center flex-shrink-0">
-                                            <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+                                    <li key={i} className="flex items-center gap-3 text-gray-700 dark:text-gray-300 font-medium">
+                                        <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 text-green-600 flex items-center justify-center flex-shrink-0">
+                                            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
                                         </div>
                                         {item}
                                     </li>
@@ -196,7 +230,7 @@ export default function Features() {
                             </ul>
                         </motion.div>
 
-                        {/* Interactive Widget visualization */}
+                        {/* Interactive Widget visualization - with Authentic SVG Icons */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             whileInView={{ opacity: 1, scale: 1 }}
@@ -204,51 +238,54 @@ export default function Features() {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="relative"
                         >
-                            <div className="absolute -inset-1 bg-gradient-to-r from-primary to-indigo-500 rounded-[2.5rem] blur-xl opacity-20 dark:opacity-30"></div>
-                            <div className="relative bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] p-8 shadow-2xl h-[400px] flex items-center justify-center overflow-hidden group">
+                            <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-indigo-500/30 rounded-[2.5rem] blur-2xl opacity-40 dark:opacity-60"></div>
+                            <div className="relative bg-[#0f111a] border border-gray-800/80 rounded-[2rem] p-8 shadow-2xl h-[420px] flex items-center justify-center overflow-hidden group">
 
-                                {/* Connection Animation */}
-                                <div className="flex items-center justify-center gap-8 relative z-10 w-full px-8">
-                                    <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 flex items-center justify-center shrink-0 z-20 hover:scale-105 transition-transform cursor-pointer">
-                                        <svg className="w-12 h-12 text-[#EA4335]" viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" /></svg>
+                                {/* Connection Animation with SVGs */}
+                                <div className="flex items-center justify-between relative z-10 w-full px-4 sm:px-12">
+                                    {/* Gmail Authentic */}
+                                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-[#1a1d27] rounded-[1.75rem] shadow-xl shadow-black/40 border border-[#2a2f40] flex items-center justify-center shrink-0 z-20 hover:scale-[1.03] transition-transform cursor-pointer">
+                                        <SiGmail className="w-12 h-12 sm:w-14 sm:h-14 text-[#EA4335]" />
                                     </div>
 
-                                    <div className="flex-grow h-1 bg-gray-100 dark:bg-gray-800 rounded-full relative overflow-hidden flex items-center justify-center">
+                                    {/* Data Line */}
+                                    <div className="flex-grow h-1.5 bg-[#1a1d27] rounded-full mx-6 relative overflow-hidden flex items-center justify-center">
                                         {/* Animated dot moving back and forth */}
                                         <motion.div
                                             animate={{ x: ["-150%", "150%"] }}
                                             transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-                                            className="w-12 h-full bg-gradient-to-r from-transparent via-primary to-transparent"
+                                            className="w-16 h-full bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_10px_rgba(59,130,246,0.8)]"
                                         />
                                         <motion.div
                                             animate={{ x: ["150%", "-150%"] }}
                                             transition={{ repeat: Infinity, duration: 1.5, delay: 0.75, ease: "linear" }}
-                                            className="w-12 h-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent absolute"
+                                            className="w-16 h-full bg-gradient-to-r from-transparent via-indigo-400 to-transparent absolute shadow-[0_0_10px_rgba(129,140,248,0.8)]"
                                         />
                                     </div>
 
-                                    <div className="w-24 h-24 bg-white dark:bg-gray-800 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-700 flex items-center justify-center shrink-0 z-20 hover:scale-105 transition-transform cursor-pointer">
-                                        <span className="font-bold text-2xl text-gray-900 dark:text-white">N</span>
+                                    {/* Notion Authentic */}
+                                    <div className="w-24 h-24 sm:w-28 sm:h-28 bg-[#1a1d27] rounded-[1.75rem] shadow-xl shadow-black/40 border border-[#2a2f40] flex items-center justify-center shrink-0 z-20 hover:scale-[1.03] transition-transform cursor-pointer">
+                                        <SiNotion className="w-12 h-12 sm:w-14 sm:h-14 text-white" />
                                     </div>
                                 </div>
 
                                 {/* Floating decorative data particles */}
                                 <div className="absolute inset-0 pointer-events-none">
-                                    {[...Array(5)].map((_, i) => (
+                                    {[...Array(6)].map((_, i) => (
                                         <motion.div
                                             key={i}
                                             animate={{
-                                                y: [100, -400],
-                                                opacity: [0, 1, 0],
+                                                y: [150, -450],
+                                                opacity: [0, 0.8, 0],
                                             }}
                                             transition={{
                                                 repeat: Infinity,
-                                                duration: 3 + Math.random() * 2,
+                                                duration: 4 + Math.random() * 3,
                                                 delay: Math.random() * 2,
                                                 ease: "linear",
                                             }}
-                                            className="absolute left-[20%] w-32 h-12 bg-white/50 dark:bg-gray-800/50 backdrop-blur rounded-lg border border-gray-100 dark:border-gray-700/50 shadow-sm"
-                                            style={{ left: `${15 + (i * 15)}%`, bottom: "-50px" }}
+                                            className="absolute w-16 sm:w-24 h-8 bg-[#1a1d27]/60 backdrop-blur-md rounded border border-white/5 shadow-lg"
+                                            style={{ left: `${15 + (i * 12)}%`, bottom: "-80px" }}
                                         />
                                     ))}
                                 </div>
@@ -256,19 +293,115 @@ export default function Features() {
                         </motion.div>
                     </div>
                 </div>
+
+                {/* Security Section (Trust marker) */}
+                <div className="max-w-5xl mx-auto px-4 mt-20 text-center relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-[#11131a]/80 backdrop-blur border border-white/5 text-gray-400 text-sm sm:text-base font-medium"
+                    >
+                        <Lock size={16} className="text-gray-500" />
+                        <span>Bank-grade encryption. We never read or store your email passwords. OAuth 2.0 secured.</span>
+                    </motion.div>
+                </div>
             </div>
 
-            {/* Security Section (Trust marker) */}
-            <div className="max-w-5xl mx-auto px-4 mt-16 pb-12 text-center">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-400"
-                >
-                    <Lock size={18} className="text-gray-400" />
-                    <span>Bank-grade encryption. We never read or store your email passwords. OAuth 2.0 secured.</span>
-                </motion.div>
+            {/* How It Works Section (Imported Component) */}
+            <div className="bg-white dark:bg-gray-950">
+                <HowItWorksSection />
+            </div>
+
+            {/* Coming Soon Section (Sneak Peek) */}
+            <div className="py-24 bg-gray-50 dark:bg-[#0a0c10] border-t border-gray-100 dark:border-gray-900 border-b relative overflow-hidden">
+                {/* Background subtle radial gradient */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/5 via-transparent to-transparent pointer-events-none" />
+
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="text-center max-w-3xl mx-auto mb-16">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                        >
+                            <h2 className="text-4xl font-extrabold text-gray-900 dark:text-white mb-6">
+                                The ecosystem is expanding.
+                            </h2>
+                            <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+                                LeadLoom is growing beyond Gmail and Notion. We're actively building deep integrations for the tools your team already relies on.
+                            </p>
+                        </motion.div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+                        {/* Slack Integration */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4 }}
+                            whileHover={{ y: -5 }}
+                            className="bg-white dark:bg-[#11131a] p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 text-center group hover:border-[#E01E5A]/30 transition-colors shadow-sm"
+                        >
+                            <div className="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-800/50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100 dark:border-gray-700/50 group-hover:bg-[#E01E5A]/10 transition-colors">
+                                <SiSlack className="w-8 h-8 text-gray-400 group-hover:text-[#E01E5A] transform group-hover:scale-110 transition-all duration-300" />
+                            </div>
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Slack Alerts</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Push immediate lead updates to Slack channels.</p>
+                        </motion.div>
+
+                        {/* Apple Integration */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4, delay: 0.1 }}
+                            whileHover={{ y: -5 }}
+                            className="bg-white dark:bg-[#11131a] p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 text-center group hover:border-[#333333]/30 dark:hover:border-white/30 transition-colors shadow-sm"
+                        >
+                            <div className="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-800/50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100 dark:border-gray-700/50 group-hover:bg-gray-200 dark:group-hover:bg-gray-800 transition-colors">
+                                <SiApple className="w-8 h-8 text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transform group-hover:scale-110 transition-all duration-300" />
+                            </div>
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Apple iCloud Mail</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Native Apple ecosystem support.</p>
+                        </motion.div>
+
+                        {/* Salesforce Integration */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4, delay: 0.2 }}
+                            whileHover={{ y: -5 }}
+                            className="bg-white dark:bg-[#11131a] p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 text-center group hover:border-[#00A1E0]/30 transition-colors shadow-sm"
+                        >
+                            <div className="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-800/50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100 dark:border-gray-700/50 group-hover:bg-[#00A1E0]/10 transition-colors">
+                                <SiSalesforce className="w-8 h-8 text-gray-400 group-hover:text-[#00A1E0] transform group-hover:scale-110 transition-all duration-300" />
+                            </div>
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Salesforce</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Enterprise CRM bi-directional sync.</p>
+                        </motion.div>
+
+                        {/* WhatsApp Integration */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            whileInView={{ opacity: 1, scale: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.4, delay: 0.3 }}
+                            whileHover={{ y: -5 }}
+                            className="bg-white dark:bg-[#11131a] p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 text-center group hover:border-[#25D366]/30 transition-colors shadow-sm"
+                        >
+                            <div className="w-16 h-16 mx-auto bg-gray-50 dark:bg-gray-800/50 rounded-2xl flex items-center justify-center mb-6 border border-gray-100 dark:border-gray-700/50 group-hover:bg-[#25D366]/10 transition-colors">
+                                <SiWhatsapp className="w-8 h-8 text-gray-400 group-hover:text-[#25D366] transform group-hover:scale-110 transition-all duration-300" />
+                            </div>
+                            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">WhatsApp Business</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Capture queries from messaging apps.</p>
+                        </motion.div>
+
+                    </div>
+                </div>
             </div>
 
         </main>
