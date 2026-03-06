@@ -8,7 +8,9 @@ export default function Navbar({ session }) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [useCasesOpen, setUseCasesOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const useCasesRef = useRef(null);
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
 
@@ -18,11 +20,14 @@ export default function Navbar({ session }) {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Close dropdown on outside click
+    // Close dropdowns on outside click
     useEffect(() => {
         const handleClickOutside = (e) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
                 setDropdownOpen(false);
+            }
+            if (useCasesRef.current && !useCasesRef.current.contains(e.target)) {
+                setUseCasesOpen(false);
             }
         };
         document.addEventListener("mousedown", handleClickOutside);
@@ -57,6 +62,45 @@ export default function Navbar({ session }) {
                         <Link to="/features" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Features
                         </Link>
+
+                        {/* Use Cases Dropdown */}
+                        <div className="relative" ref={useCasesRef}>
+                            <button
+                                onClick={() => setUseCasesOpen(!useCasesOpen)}
+                                onMouseEnter={() => setUseCasesOpen(true)}
+                                className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors focus:outline-none py-2"
+                            >
+                                Use Cases
+                                <ChevronDown size={14} className={`transition-transform duration-200 ${useCasesOpen ? 'rotate-180 text-primary' : ''}`} />
+                            </button>
+
+                            {/* Dropdown Menu */}
+                            {useCasesOpen && (
+                                <div
+                                    className="absolute left-0 mt-2 w-72 bg-white dark:bg-[#11131a] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] dark:shadow-2xl border border-gray-100 dark:border-gray-800 py-3 animate-in fade-in slide-in-from-top-2 z-50 transition-colors"
+                                    onMouseLeave={() => setUseCasesOpen(false)}
+                                >
+                                    <div className="flex flex-col">
+                                        {[
+                                            { title: "Solo Founders & Solopreneurs", to: "/use-cases/solo-founders" },
+                                            { title: "High-Ticket Freelancers", to: "/use-cases/freelancers" },
+                                            { title: "Boutique Digital Agencies", to: "/use-cases/agencies" },
+                                            { title: "Creators & Info-Product Sellers", to: "/use-cases/creators" }
+                                        ].map((item, idx) => (
+                                            <Link
+                                                key={idx}
+                                                to={item.to}
+                                                onClick={() => setUseCasesOpen(false)}
+                                                className="px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/80 hover:text-primary dark:hover:text-white transition-colors block font-medium"
+                                            >
+                                                {item.title}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <Link to="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Pricing
                         </Link>
@@ -151,11 +195,31 @@ export default function Navbar({ session }) {
 
             {/* Mobile menu */}
             {mobileMenuOpen && (
-                <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl absolute w-full">
+                <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl absolute w-full max-h-[85vh] overflow-y-auto">
                     <div className="px-4 pt-2 pb-6 space-y-1">
                         <Link to="/features" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
                             Features
                         </Link>
+
+                        {/* Mobile Use Cases Section */}
+                        <div className="px-3 py-2">
+                            <div className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 mt-2">Use Cases</div>
+                            <div className="space-y-1 pl-2 border-l-2 border-gray-100 dark:border-gray-800 ml-1">
+                                <Link to="/use-cases/solo-founders" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    Solo Founders & Solopreneurs
+                                </Link>
+                                <Link to="/use-cases/freelancers" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    High-Ticket Freelancers
+                                </Link>
+                                <Link to="/use-cases/agencies" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    Boutique Digital Agencies
+                                </Link>
+                                <Link to="/use-cases/creators" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    Creators & Info-Product Sellers
+                                </Link>
+                            </div>
+                        </div>
+
                         <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
                             Pricing
                         </Link>
