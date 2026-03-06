@@ -54,7 +54,7 @@ export default function Navbar({ session }) {
                     </Link>
 
                     <div className="hidden md:flex items-center space-x-8">
-                        <Link to="/#features" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
+                        <Link to="/features" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Features
                         </Link>
                         <Link to="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
@@ -153,7 +153,7 @@ export default function Navbar({ session }) {
             {mobileMenuOpen && (
                 <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl absolute w-full">
                     <div className="px-4 pt-2 pb-6 space-y-1">
-                        <Link to="/#features" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <Link to="/features" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
                             Features
                         </Link>
                         <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">

@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
+import Features from "./pages/Features";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
@@ -60,6 +61,7 @@ function App() {
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageWrapper><Home session={session} /></PageWrapper>} />
+          <Route path="/features" element={<PageWrapper><Features /></PageWrapper>} />
           <Route path="/pricing" element={<PageWrapper><Pricing session={session} /></PageWrapper>} />
           <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />

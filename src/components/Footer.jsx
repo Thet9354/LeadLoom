@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 
 export default function Footer() {
     const location = useLocation();
-    const showCTA = ["/", "/pricing"].includes(location.pathname);
+    const showCTA = ["/", "/pricing", "/features"].includes(location.pathname);
 
     return (
         <>
@@ -47,7 +47,7 @@ export default function Footer() {
                         <div>
                             <h4 className="font-bold text-gray-900 dark:text-white mb-4">Product</h4>
                             <ul className="space-y-2">
-                                <li><Link to="/#features" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Features</Link></li>
+                                <li><Link to="/features" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Features</Link></li>
                                 <li><Link to="/pricing" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Pricing</Link></li>
                                 <li><a href="https://calendly.com/thetpine254/30min" className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors">Book Demo</a></li>
                             </ul>
