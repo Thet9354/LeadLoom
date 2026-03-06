@@ -82,10 +82,10 @@ export default function Navbar({ session }) {
                                 >
                                     <div className="flex flex-col">
                                         {[
-                                            { title: "Solo Founders & Solopreneurs", to: "/use-cases/solo-founders" },
-                                            { title: "High-Ticket Freelancers", to: "/use-cases/freelancers" },
-                                            { title: "Boutique Digital Agencies", to: "/use-cases/agencies" },
-                                            { title: "Creators & Info-Product Sellers", to: "/use-cases/creators" }
+                                            { title: "Solopreneurs", to: "/use-cases/solopreneurs" },
+                                            { title: "Freelancers", to: "/use-cases/freelancers" },
+                                            { title: "Agencies", to: "/use-cases/agencies" },
+                                            { title: "Creators", to: "/use-cases/creators" }
                                         ].map((item, idx) => (
                                             <Link
                                                 key={idx}
@@ -205,17 +205,17 @@ export default function Navbar({ session }) {
                         <div className="px-3 py-2">
                             <div className="text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 mt-2">Use Cases</div>
                             <div className="space-y-1 pl-2 border-l-2 border-gray-100 dark:border-gray-800 ml-1">
-                                <Link to="/use-cases/solo-founders" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    Solo Founders & Solopreneurs
+                                <Link to="/use-cases/solopreneurs" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    Solopreneurs
                                 </Link>
                                 <Link to="/use-cases/freelancers" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    High-Ticket Freelancers
+                                    Freelancers
                                 </Link>
                                 <Link to="/use-cases/agencies" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    Boutique Digital Agencies
+                                    Agencies
                                 </Link>
                                 <Link to="/use-cases/creators" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
-                                    Creators & Info-Product Sellers
+                                    Creators
                                 </Link>
                             </div>
                         </div>
