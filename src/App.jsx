@@ -14,6 +14,7 @@ import Signup from "./pages/Signup";
 import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Features from "./pages/Features";
+import Solopreneurs from "./pages/cases/Solopreneurs";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
@@ -62,6 +63,7 @@ function App() {
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageWrapper><Home session={session} /></PageWrapper>} />
           <Route path="/features" element={<PageWrapper><Features /></PageWrapper>} />
+          <Route path="/use-cases/solopreneurs" element={<PageWrapper><Solopreneurs /></PageWrapper>} />
           <Route path="/pricing" element={<PageWrapper><Pricing session={session} /></PageWrapper>} />
           <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />

@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 
 export default function Footer() {
     const location = useLocation();
-    const showCTA = ["/", "/pricing", "/features"].includes(location.pathname);
+    const showCTA = ["/", "/pricing", "/features"].includes(location.pathname) || location.pathname.startsWith("/use-cases/");
 
     return (
         <>
