@@ -15,6 +15,9 @@ import SettingsPage from "./pages/Settings";
 import Billing from "./pages/Billing";
 import Features from "./pages/Features";
 import Solopreneurs from "./pages/cases/Solopreneurs";
+import Freelancers from "./pages/cases/Freelancers";
+import Agencies from "./pages/cases/Agencies";
+import Creators from "./pages/cases/Creators";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 
@@ -64,6 +67,9 @@ function App() {
           <Route path="/" element={<PageWrapper><Home session={session} /></PageWrapper>} />
           <Route path="/features" element={<PageWrapper><Features /></PageWrapper>} />
           <Route path="/use-cases/solopreneurs" element={<PageWrapper><Solopreneurs /></PageWrapper>} />
+          <Route path="/use-cases/freelancers" element={<PageWrapper><Freelancers /></PageWrapper>} />
+          <Route path="/use-cases/agencies" element={<PageWrapper><Agencies /></PageWrapper>} />
+          <Route path="/use-cases/creators" element={<PageWrapper><Creators /></PageWrapper>} />
           <Route path="/pricing" element={<PageWrapper><Pricing session={session} /></PageWrapper>} />
           <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
           <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
