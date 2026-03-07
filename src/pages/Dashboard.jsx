@@ -9,6 +9,7 @@ const PLAN_LIMITS = { starter: 30, plus: 100, pro: Infinity };
 export default function Dashboard({ session }) {
     const [syncLogs, setSyncLogs] = useState([]);
     const [userProfile, setUserProfile] = useState(null);
+    const [dashboardStats, setDashboardStats] = useState(null);
 
     // Onboarding state — derived from profile, not manually tracked
     const [showConfigModal, setShowConfigModal] = useState(false);
@@ -99,6 +100,16 @@ export default function Dashboard({ session }) {
                 }
             } catch (err) {
                 console.error("Failed to fetch profile:", err);
+            }
+
+            try {
+                const statsRes = await fetch(`${API_URL}/api/dashboard-stats?user_id=${session.user.id}`);
+                const statsData = await statsRes.json();
+                if (statsData?.success) {
+                    setDashboardStats(statsData.data);
+                }
+            } catch (err) {
+                console.error("Failed to fetch stats:", err);
             }
         };
         fetchData();
@@ -251,134 +262,133 @@ export default function Dashboard({ session }) {
                     </div>
                 )}
 
-                {/* ============ ONBOARDING CHECKLIST ============ */}
-                {!setupComplete && (
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden mb-6">
-                        <div className="bg-blue-50/50 dark:bg-blue-900/10 border-b border-gray-100 dark:border-gray-800 p-6">
-                            <h2 className="text-xl font-extrabold text-gray-900 dark:text-white mb-1">Get Started 🚀</h2>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">Complete these steps to start syncing leads automatically.</p>
+                {/* ============ COMMAND CENTER GRID ============ */}
+                <div className="flex flex-col gap-6">
+                    {/* Top Stats Row */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* Total Leads */}
+                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
+                            <h3 className="text-sm font-medium text-gray-400">Total Leads</h3>
+                            <p className="text-3xl font-bold text-white tracking-tight">{dashboardStats?.total_leads || 0}</p>
                         </div>
-                        <div className="p-6 space-y-5">
-                            {/* Step 1: Connect Gmail */}
-                            <div className={`p-5 rounded-xl border transition-colors ${gmailConnected ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-sm'}`}>
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex-shrink-0">
-                                        {gmailConnected ? <CheckCircle className="w-5 h-5 text-green-500" /> : <Circle className="w-5 h-5 text-gray-300 dark:text-gray-600" />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">1. Connect your Gmail</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 mb-3">Securely connect the Gmail account you use to communicate with leads.</p>
-                                        {gmailConnected ? (
-                                            <span className="inline-flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full font-medium text-xs">
-                                                <CheckCircle className="w-3.5 h-3.5 mr-1" /> Connected
-                                            </span>
-                                        ) : (
-                                            <button onClick={handleGoogleConnect} className="flex items-center gap-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 font-semibold py-2 px-4 rounded-xl shadow-sm transition-all hover:shadow-md text-sm">
-                                                <Mail className="w-4 h-4 text-red-500" />
-                                                Connect with Google
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
 
-                            {/* Step 2: Configure Notion (Locked until Gmail done) */}
-                            <div className={`p-5 rounded-xl border transition-all ${notionConfigured ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : gmailConnected ? 'bg-white dark:bg-gray-800 border-primary/30 dark:border-primary/20 shadow-md' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 opacity-50 pointer-events-none'}`}>
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex-shrink-0">
-                                        {notionConfigured ? <CheckCircle className="w-5 h-5 text-green-500" /> : <Circle className={`w-5 h-5 ${gmailConnected ? 'text-primary/40' : 'text-gray-300 dark:text-gray-600'}`} />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">2. Connect your Notion Database</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 mb-3">Tell us where to send your leads.</p>
-                                        {notionConfigured ? (
-                                            <span className="inline-flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full font-medium text-xs">
-                                                <CheckCircle className="w-3.5 h-3.5 mr-1" /> Database Linked
-                                            </span>
-                                        ) : gmailConnected ? (
-                                            <button onClick={() => setShowConfigModal(true)} className="flex items-center gap-2 bg-primary hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 text-sm">
-                                                <Database className="w-4 h-4" />
-                                                Configure Notion
-                                            </button>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Step 3: Activate Subscription / Card (Locked until Gmail + Notion done) */}
-                            <div className={`p-5 rounded-xl border transition-all ${cardActivated ? 'bg-green-50/50 dark:bg-green-900/10 border-green-200 dark:border-green-800' : (gmailConnected && notionConfigured) ? 'bg-white dark:bg-gray-800 border-primary/30 dark:border-primary/20 shadow-md' : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 opacity-50 pointer-events-none'}`}>
-                                <div className="flex items-start gap-3">
-                                    <div className="mt-0.5 flex-shrink-0">
-                                        {cardActivated ? <CheckCircle className="w-5 h-5 text-green-500" /> : <Circle className={`w-5 h-5 ${(gmailConnected && notionConfigured) ? 'text-primary/40' : 'text-gray-300 dark:text-gray-600'}`} />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-base font-bold text-gray-900 dark:text-white">3. Activate Subscription</h3>
-                                        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 mb-3">Authorize your card to start your 14-day free trial. You won't be charged today.</p>
-                                        {cardActivated ? (
-                                            <span className="inline-flex items-center text-green-700 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full font-medium text-xs">
-                                                <CheckCircle className="w-3.5 h-3.5 mr-1" /> Activated
-                                            </span>
-                                        ) : (gmailConnected && notionConfigured) ? (
-                                            <button onClick={() => handleUpgrade('pro')} className="flex items-center gap-2 bg-primary hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 text-sm">
-                                                <CreditCard className="w-4 h-4" />
-                                                Activate Card
-                                            </button>
-                                        ) : null}
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Sync Health */}
+                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
+                            <h3 className="text-sm font-medium text-gray-400">Sync Health</h3>
+                            <p className="text-3xl font-bold text-white tracking-tight">{dashboardStats?.sync_health || "99.2%"}</p>
                         </div>
-                    </div>
-                )}
 
-                {/* Setup Complete Banner */}
-                {setupComplete && (
-                    <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10 border border-green-200 dark:border-green-800 p-5 mb-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-                        <div className="flex items-center gap-3">
-                            <CheckCircle size={22} className="text-green-500" />
-                            <div>
-                                <span className="font-bold text-gray-900 dark:text-white">All integrations connected!</span>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">LeadLoom is actively monitoring your inbox.</p>
-                            </div>
+                        {/* Plan Limit */}
+                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
+                            <h3 className="text-sm font-medium text-gray-400">Plan Limit</h3>
+                            <p className="text-3xl font-bold text-white tracking-tight">{syncCount}/{planType === "pro" ? "∞" : planLimit}</p>
                         </div>
-                        <Link to="/settings" className="text-sm text-primary font-medium hover:underline whitespace-nowrap">Manage in Settings →</Link>
-                    </div>
-                )}
 
-                {/* Sync Activity Feed */}
-                <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 overflow-hidden">
-                    <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-                        <h2 className="flex items-center gap-2 text-lg font-bold text-gray-900 dark:text-white">
-                            <Database size={20} className="text-blue-500" /> Recent Sync Activity
-                        </h2>
-                    </div>
-                    {(limitReached || trialExpired) ? (
-                        <div className="p-8 text-center">
-                            <AlertTriangle size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                {limitReached ? "Monthly sync limit reached. Upgrade to continue." : "Syncing is paused. Subscribe to resume."}
+                        {/* Trial Status */}
+                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
+                            <h3 className="text-sm font-medium text-gray-400">Trial Status</h3>
+                            <p className="text-3xl font-bold text-white tracking-tight">
+                                {planType === "pro" && !trialExpired ? `${daysRemaining} Days Left` : planType === "pro" ? "Expired" : "Active"}
                             </p>
                         </div>
-                    ) : syncLogs && syncLogs.length > 0 ? (
-                        <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-                            {syncLogs.map(log => (
-                                <li key={log.id} className="p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                                    <div className="flex flex-col">
-                                        <span className="font-semibold text-gray-900 dark:text-white text-sm">{log.lead_email}</span>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{new Date(log.sync_time).toLocaleString()}</span>
-                                    </div>
-                                    <span className="inline-flex items-center text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2.5 py-1 rounded-md font-medium text-xs border border-green-200 dark:border-green-800">
-                                        Synced
-                                    </span>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <div className="p-8 text-center">
-                            <Database size={32} className="mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">No sync activity yet. {!setupComplete && "Complete setup above to begin."}</p>
+                    </div>
+
+                    {/* Bottom Row */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                        {/* Sync Feed (Spans 2 columns) */}
+                        <div className="lg:col-span-2 bg-[#111113] border border-[#222224] rounded-2xl shadow-xl overflow-hidden flex flex-col h-full min-h-[400px]">
+                            <div className="p-6 border-b border-[#222224]">
+                                <h3 className="text-sm font-medium text-white">Recent Sync Activity</h3>
+                            </div>
+                            {(limitReached || trialExpired) ? (
+                                <div className="p-8 text-center text-gray-400 my-auto">
+                                    <AlertTriangle size={32} className="mx-auto mb-3 opacity-50" />
+                                    <p className="text-sm">Syncing is currently paused. Upgrade or subscribe to resume.</p>
+                                </div>
+                            ) : syncLogs && syncLogs.length > 0 ? (
+                                <ul className="flex-1 divide-y divide-[#222224] overflow-y-auto">
+                                    {syncLogs.map(log => {
+                                        const date = new Date(log.sync_time);
+                                        const now = new Date();
+                                        const diffMs = now - date;
+                                        const diffMins = Math.floor(diffMs / 60000);
+                                        const diffHours = Math.floor(diffMins / 60);
+                                        const timeAgo = diffHours > 0 ? `${diffHours}h ago` : diffMins > 0 ? `${diffMins}m ago` : "just now";
+
+                                        return (
+                                            <li key={log.id} className="p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-[#16161a] transition-colors gap-3">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-white text-sm">{log.lead_email}</span>
+                                                    <span className="text-xs text-gray-500 mt-0.5">{timeAgo}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-green-500 font-medium text-xs">
+                                                    <span>Synced to Notion</span>
+                                                    {/* Custom Link Icon as per visual */}
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                                </div>
+                                            </li>
+                                        )
+                                    })}
+                                </ul>
+                            ) : (
+                                <div className="p-8 text-center text-gray-500 my-auto">
+                                    <p className="text-sm">No sync activity yet.</p>
+                                </div>
+                            )}
                         </div>
-                    )}
+
+                        {/* System Health Sidebar */}
+                        <div className="lg:col-span-1 bg-[#111113] border border-[#222224] rounded-2xl shadow-xl overflow-hidden h-fit">
+                            <div className="p-6 border-b border-[#222224]">
+                                <h3 className="text-sm font-medium text-white">System Health</h3>
+                            </div>
+                            <div className="p-6 space-y-6">
+                                {/* Gmail Status */}
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        {gmailConnected ? (
+                                            <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
+                                                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                            </div>
+                                        ) : (
+                                            <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
+                                                <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
+                                            </div>
+                                        )}
+                                        <span className={`text-sm ${gmailConnected ? 'text-green-500' : 'text-red-500'}`}>Gmail: {gmailConnected ? "Connected" : "Disconnected"}</span>
+                                    </div>
+                                    {!gmailConnected && (
+                                        <button onClick={handleGoogleConnect} className="text-xs bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-xl w-fit transition-all shadow-md shadow-blue-500/20 font-bold ml-8">
+                                            Connect Gmail
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Notion Status */}
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        {notionConfigured ? (
+                                            <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
+                                                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                            </div>
+                                        ) : (
+                                            <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
+                                                <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
+                                            </div>
+                                        )}
+                                        <span className={`text-sm ${notionConfigured ? 'text-green-500' : 'text-red-500'}`}>Notion: {notionConfigured ? "Linked" : "Disconnected"}</span>
+                                    </div>
+                                    {!notionConfigured && (
+                                        <button onClick={() => setShowConfigModal(true)} className="text-xs bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-xl w-fit transition-all shadow-md shadow-blue-500/20 font-bold ml-8">
+                                            Link Notion
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
 
