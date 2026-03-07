@@ -346,17 +346,24 @@ export default function Dashboard({ session }) {
                             <div className="p-6 space-y-6">
                                 {/* Gmail Status */}
                                 <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-3">
-                                        {gmailConnected ? (
-                                            <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
-                                                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                            </div>
-                                        ) : (
-                                            <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
-                                                <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
-                                            </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            {gmailConnected ? (
+                                                <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
+                                                    <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                </div>
+                                            ) : (
+                                                <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
+                                                    <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
+                                                </div>
+                                            )}
+                                            <span className={`text-sm ${gmailConnected ? 'text-green-500' : 'text-red-500'}`}>Gmail: {gmailConnected ? "Connected" : "Disconnected"}</span>
+                                        </div>
+                                        {gmailConnected && (
+                                            <button onClick={handleGoogleConnect} className="text-xs text-gray-400 hover:text-white transition-colors underline">
+                                                Reconnect
+                                            </button>
                                         )}
-                                        <span className={`text-sm ${gmailConnected ? 'text-green-500' : 'text-red-500'}`}>Gmail: {gmailConnected ? "Connected" : "Disconnected"}</span>
                                     </div>
                                     {!gmailConnected && (
                                         <button onClick={handleGoogleConnect} className="text-xs bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-xl w-fit transition-all shadow-md shadow-blue-500/20 font-bold ml-8">
@@ -367,17 +374,24 @@ export default function Dashboard({ session }) {
 
                                 {/* Notion Status */}
                                 <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-3">
-                                        {notionConfigured ? (
-                                            <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
-                                                <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                            </div>
-                                        ) : (
-                                            <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
-                                                <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
-                                            </div>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            {notionConfigured ? (
+                                                <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
+                                                    <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                </div>
+                                            ) : (
+                                                <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
+                                                    <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
+                                                </div>
+                                            )}
+                                            <span className={`text-sm ${notionConfigured ? 'text-green-500' : 'text-red-500'}`}>Notion: {notionConfigured ? "Linked" : "Disconnected"}</span>
+                                        </div>
+                                        {notionConfigured && (
+                                            <button onClick={() => setShowConfigModal(true)} className="text-xs text-gray-400 hover:text-white transition-colors underline">
+                                                Change
+                                            </button>
                                         )}
-                                        <span className={`text-sm ${notionConfigured ? 'text-green-500' : 'text-red-500'}`}>Notion: {notionConfigured ? "Linked" : "Disconnected"}</span>
                                     </div>
                                     {!notionConfigured && (
                                         <button onClick={() => setShowConfigModal(true)} className="text-xs bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-xl w-fit transition-all shadow-md shadow-blue-500/20 font-bold ml-8">
