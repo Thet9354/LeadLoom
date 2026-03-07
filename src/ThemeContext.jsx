@@ -4,11 +4,9 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(() => {
-        // Only return light if explicitly set to light previously. 
-        // Otherwise, always default to dark.
-        const storedTheme = localStorage.getItem("theme");
-        if (storedTheme === "light") return "light";
-        return "dark";
+        // The index.html blocking script forces 'dark' into localStorage on load.
+        // We can safely read it here, or default to dark.
+        return localStorage.getItem("theme") || "dark";
     });
 
     useEffect(() => {

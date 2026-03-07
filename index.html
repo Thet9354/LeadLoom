@@ -1,13 +1,21 @@
 <!doctype html>
 <html lang="en" class="dark">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/ll.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>leadloom</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/ll.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>leadloom</title>
+  <script>
+    // Force dark mode unconditionally to override any old cached 'light' values from previous visits
+    localStorage.setItem('theme', 'dark');
+    document.documentElement.classList.add('dark');
+  </script>
+</head>
+
+<body class="bg-gray-950 text-white">
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
