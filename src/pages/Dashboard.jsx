@@ -267,27 +267,27 @@ export default function Dashboard({ session }) {
                     {/* Top Stats Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Total Leads */}
-                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
-                            <h3 className="text-sm font-medium text-gray-400">Total Leads</h3>
-                            <p className="text-3xl font-bold text-white tracking-tight">{dashboardStats?.total_leads || 0}</p>
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Leads</h3>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{dashboardStats?.total_leads || 0}</p>
                         </div>
 
                         {/* Sync Health */}
-                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
-                            <h3 className="text-sm font-medium text-gray-400">Sync Health</h3>
-                            <p className="text-3xl font-bold text-white tracking-tight">{dashboardStats?.sync_health || "99.2%"}</p>
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Sync Health</h3>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{dashboardStats?.sync_health || "99.2%"}</p>
                         </div>
 
                         {/* Plan Limit */}
-                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
-                            <h3 className="text-sm font-medium text-gray-400">Plan Limit</h3>
-                            <p className="text-3xl font-bold text-white tracking-tight">{syncCount}/{planType === "pro" ? "∞" : planLimit}</p>
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Plan Limit</h3>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{syncCount}/{planType === "pro" ? "∞" : planLimit}</p>
                         </div>
 
                         {/* Trial Status */}
-                        <div className="bg-[#111113] border border-[#222224] rounded-2xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-[#333336] transition-colors">
-                            <h3 className="text-sm font-medium text-gray-400">Trial Status</h3>
-                            <p className="text-3xl font-bold text-white tracking-tight">
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Trial Status</h3>
+                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 {planType === "pro" && !trialExpired ? `${daysRemaining} Days Left` : planType === "pro" ? "Expired" : "Active"}
                             </p>
                         </div>
@@ -297,17 +297,17 @@ export default function Dashboard({ session }) {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         {/* Sync Feed (Spans 2 columns) */}
-                        <div className="lg:col-span-2 bg-[#111113] border border-[#222224] rounded-2xl shadow-xl overflow-hidden flex flex-col h-full min-h-[400px]">
-                            <div className="p-6 border-b border-[#222224]">
-                                <h3 className="text-sm font-medium text-white">Recent Sync Activity</h3>
+                        <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full min-h-[400px]">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">Recent Sync Activity</h3>
                             </div>
                             {(limitReached || trialExpired) ? (
-                                <div className="p-8 text-center text-gray-400 my-auto">
+                                <div className="p-8 text-center text-gray-500 dark:text-gray-400 my-auto">
                                     <AlertTriangle size={32} className="mx-auto mb-3 opacity-50" />
                                     <p className="text-sm">Syncing is currently paused. Upgrade or subscribe to resume.</p>
                                 </div>
                             ) : syncLogs && syncLogs.length > 0 ? (
-                                <ul className="flex-1 divide-y divide-[#222224] overflow-y-auto">
+                                <ul className="flex-1 divide-y divide-gray-100 dark:divide-gray-800 overflow-y-auto">
                                     {syncLogs.map(log => {
                                         const date = new Date(log.sync_time);
                                         const now = new Date();
@@ -317,12 +317,12 @@ export default function Dashboard({ session }) {
                                         const timeAgo = diffHours > 0 ? `${diffHours}h ago` : diffMins > 0 ? `${diffMins}m ago` : "just now";
 
                                         return (
-                                            <li key={log.id} className="p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-[#16161a] transition-colors gap-3">
+                                            <li key={log.id} className="p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors gap-3">
                                                 <div className="flex flex-col">
-                                                    <span className="font-medium text-white text-sm">{log.lead_email}</span>
-                                                    <span className="text-xs text-gray-500 mt-0.5">{timeAgo}</span>
+                                                    <span className="font-medium text-gray-900 dark:text-white text-sm">{log.lead_email}</span>
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{timeAgo}</span>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-green-500 font-medium text-xs">
+                                                <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2.5 py-1 rounded-md font-medium text-xs border border-green-200 dark:border-green-800">
                                                     <span>Synced to Notion</span>
                                                     {/* Custom Link Icon as per visual */}
                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
@@ -332,16 +332,16 @@ export default function Dashboard({ session }) {
                                     })}
                                 </ul>
                             ) : (
-                                <div className="p-8 text-center text-gray-500 my-auto">
+                                <div className="p-8 text-center text-gray-500 dark:text-gray-400 my-auto">
                                     <p className="text-sm">No sync activity yet.</p>
                                 </div>
                             )}
                         </div>
 
                         {/* System Health Sidebar */}
-                        <div className="lg:col-span-1 bg-[#111113] border border-[#222224] rounded-2xl shadow-xl overflow-hidden h-fit">
-                            <div className="p-6 border-b border-[#222224]">
-                                <h3 className="text-sm font-medium text-white">System Health</h3>
+                        <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden h-fit">
+                            <div className="p-6 border-b border-gray-100 dark:border-gray-800">
+                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">System Health</h3>
                             </div>
                             <div className="p-6 space-y-6">
                                 {/* Gmail Status */}
@@ -360,7 +360,7 @@ export default function Dashboard({ session }) {
                                             <span className={`text-sm ${gmailConnected ? 'text-green-500' : 'text-red-500'}`}>Gmail: {gmailConnected ? "Connected" : "Disconnected"}</span>
                                         </div>
                                         {gmailConnected && (
-                                            <button onClick={handleGoogleConnect} className="text-xs text-gray-400 hover:text-white transition-colors underline">
+                                            <button onClick={handleGoogleConnect} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors underline">
                                                 Reconnect
                                             </button>
                                         )}
@@ -388,7 +388,7 @@ export default function Dashboard({ session }) {
                                             <span className={`text-sm ${notionConfigured ? 'text-green-500' : 'text-red-500'}`}>Notion: {notionConfigured ? "Linked" : "Disconnected"}</span>
                                         </div>
                                         {notionConfigured && (
-                                            <button onClick={() => setShowConfigModal(true)} className="text-xs text-gray-400 hover:text-white transition-colors underline">
+                                            <button onClick={() => setShowConfigModal(true)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors underline">
                                                 Change
                                             </button>
                                         )}
