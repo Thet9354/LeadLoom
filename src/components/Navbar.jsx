@@ -107,9 +107,9 @@ export default function Navbar({ session }) {
                         <Link to={session ? "/dashboard" : "/login"} className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Dashboard
                         </Link>
-                        <a href="mailto:leadloomsg@gmail.com" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
+                        <Link to="/contact" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Contact
-                        </a>
+                        </Link>
                     </div>
 
                     <div className="hidden md:flex items-center gap-3">
@@ -265,9 +265,9 @@ export default function Navbar({ session }) {
                             </>
                         ) : (
                             <>
-                                <a href="mailto:leadloomsg@gmail.com" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                                <Link to="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
                                     Contact
-                                </a>
+                                </Link>
                                 <div className="border-t border-gray-100 dark:border-gray-800 my-2"></div>
                                 <div className="space-y-2 pt-1">
                                     <Link

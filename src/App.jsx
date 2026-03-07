@@ -20,6 +20,7 @@ import Agencies from "./pages/cases/Agencies";
 import Creators from "./pages/cases/Creators";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Contact from "./pages/Contact";
 
 function PageWrapper({ children }) {
   return (
@@ -75,6 +76,7 @@ function App() {
           <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
           <Route path="/terms" element={<PageWrapper><TermsOfService /></PageWrapper>} />
           <Route path="/privacy" element={<PageWrapper><PrivacyPolicy /></PageWrapper>} />
+          <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
           <Route path="/dashboard" element={
             <PrivateRoute session={session}>
               <PageWrapper><Dashboard session={session} /></PageWrapper>

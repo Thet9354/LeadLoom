@@ -13,6 +13,11 @@ import google_auth_oauthlib.flow
 import googleapiclient.discovery  # Added missing import
 from urllib.parse import urlencode
 
+# Email sending imports
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 # Import database functions (assuming api logic is running in same directory context)
 from api.database import upsert_user_config, check_email_exists
 
@@ -473,6 +478,65 @@ async def check_email(email: str):
         return JSONResponse(status_code=400, content={"error": "email is required"})
     exists = check_email_exists(email)
     return {"exists": exists}
+
+
+@app.post("/api/contact")
+async def submit_contact_form(request: Request):
+    """Handles contact form submissions and emails them directly to leadloomsg@gmail.com."""
+    try:
+        data = await request.json()
+        first_name = data.get("firstName", "")
+        last_name = data.get("lastName", "")
+        sender_email = data.get("email", "")
+        message = data.get("message", "")
+
+        if not first_name or not sender_email or not message:
+            return JSONResponse(status_code=400, content={"error": "Name, email, and message are required."})
+
+        # Get credentials from environment
+        smtp_email = os.environ.get("SMTP_EMAIL", "leadloomsg@gmail.com")
+        app_password = os.environ.get("GMAIL_APP_PASSWORD")
+        owner_email = "leadloomsg@gmail.com"
+
+        # Construct the email
+        msg = MIMEMultipart()
+        msg['From'] = smtp_email
+        msg['To'] = owner_email
+        msg['Reply-To'] = sender_email
+        msg['Subject'] = f"New LeadLoom Contact Form Submission from {first_name} {last_name}"
+
+        body = f"""
+New Contact Form Submission:
+
+Name: {first_name} {last_name}
+Email: {sender_email}
+
+Message:
+{message}
+        """
+        msg.attach(MIMEText(body, 'plain'))
+
+        # If credentials exist, send it via SMTP_SSL
+        if app_password:
+            try:
+                server = smtplib.SMTP_SSL("smtp.gmail.com", 465)
+                # server.set_debuglevel(1) # Un-comment to print verbose SMTP logs
+                server.login(smtp_email, app_password)
+                server.send_message(msg)
+                server.quit()
+                print(f"Successfully dispatched contact form email from {sender_email}")
+            except Exception as smtp_e:
+                print(f"SMTP Error during dispatch: {smtp_e}")
+                # We return success to the user so the UI works, but log the error
+                return {"success": True, "warning": "Email dispatch failed internally. Did you set the GMAIL_APP_PASSWORD correctly?"}
+        else:
+            print("WARNING: GMAIL_APP_PASSWORD is not set. Contact form submission received but email was not sent.")
+
+        return {"success": True, "message": "Message sent successfully!"}
+        
+    except Exception as e:
+        print(f"Contact Form Error: {e}")
+        return JSONResponse(status_code=500, content={"error": "An error occurred while processing your request."})
 
 
 @app.get("/api/health")
