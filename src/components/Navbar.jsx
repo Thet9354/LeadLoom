@@ -52,8 +52,10 @@ export default function Navbar({ session }) {
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     <Link to="/" className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0, 0)}>
-                        <img src="/weave-arrow.png" alt="LeadLooms Logo" className="w-9 h-9 object-contain" />
-                        <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">LeadLooms</span>
+                        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-lg leading-none shadow-md">
+                            LL
+                        </div>
+                        <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">LeadLoom</span>
                     </Link>
 
                     <div className="hidden md:flex items-center space-x-8">

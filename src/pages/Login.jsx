@@ -134,7 +134,9 @@ export default function Login() {
                 {/* Brand header */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-5">
-                        <img src="/weave-arrow.png" alt="LeadLooms Logo" className="w-14 h-14 object-contain" />
+                        <div className="bg-blue-600 text-white w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold shadow-lg shadow-blue-500/25">
+                            LL
+                        </div>
                     </div>
                     <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight">
                         Welcome back to LeadLooms
