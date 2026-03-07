@@ -104,6 +104,9 @@ export default function Navbar({ session }) {
                         <Link to="/pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Pricing
                         </Link>
+                        <Link to={session ? "/dashboard" : "/login"} className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
+                            Dashboard
+                        </Link>
                         <a href="mailto:leadloomsg@gmail.com" className="text-gray-600 dark:text-gray-300 hover:text-primary font-medium transition-colors">
                             Contact
                         </a>
@@ -222,6 +225,9 @@ export default function Navbar({ session }) {
 
                         <Link to="/pricing" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
                             Pricing
+                        </Link>
+                        <Link to={session ? "/dashboard" : "/login"} onClick={() => setMobileMenuOpen(false)} className="block px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 hover:text-primary hover:bg-gray-50 dark:hover:bg-gray-800">
+                            Dashboard
                         </Link>
                         {session ? (
                             <>
