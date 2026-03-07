@@ -76,7 +76,7 @@ function App() {
           <Route path="/signup" element={<PageWrapper><Signup /></PageWrapper>} />
           <Route path="/terms" element={<PageWrapper><TermsOfService /></PageWrapper>} />
           <Route path="/privacy" element={<PageWrapper><PrivacyPolicy /></PageWrapper>} />
-          <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
+          <Route path="/contact" element={<PageWrapper><Contact session={session} /></PageWrapper>} />
           <Route path="/dashboard" element={
             <PrivateRoute session={session}>
               <PageWrapper><Dashboard session={session} /></PageWrapper>

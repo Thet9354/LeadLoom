@@ -1,17 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, CheckCircle2, AlertCircle, Mail, User, MessageSquare } from "lucide-react";
 
-export default function Contact() {
+export default function Contact({ session }) {
     const [formData, setFormData] = useState({
         firstName: "",
         lastName: "",
-        email: "",
+        email: session?.user?.email || "",
         message: ""
     });
 
     const [status, setStatus] = useState("idle"); // idle, loading, success, error
     const [errorMessage, setErrorMessage] = useState("");
+
+    // Update email if session loads slightly after initial render
+    useEffect(() => {
+        if (session?.user?.email) {
+            setFormData(prev => ({ ...prev, email: session.user.email }));
+        }
+    }, [session]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
