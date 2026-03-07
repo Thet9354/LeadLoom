@@ -23,7 +23,7 @@ export default function Solopreneurs() {
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-gray-900 dark:text-white leading-tight mb-8 tracking-tight max-w-4xl mx-auto"
                 >
-                    The automated AI inbound engine for <br className="hidden md:block" />
+                    The automated inbound engine for <br className="hidden md:block" />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
                         independent founders
                     </span>
@@ -35,7 +35,7 @@ export default function Solopreneurs() {
                     transition={{ duration: 0.5, delay: 0.2 }}
                     className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed mb-10"
                 >
-                    Solo founders deserve an AI that remembers, not just replies. The memory engine behind the smartest one-person sales operations.
+                    Solo founders deserve a system that prevents lead leakage, not just sends replies. The automated engine behind the smartest one-person sales operations.
                 </motion.p>
 
                 <motion.div
@@ -66,7 +66,7 @@ export default function Solopreneurs() {
                 <div className="text-center mb-16 max-w-3xl mx-auto">
                     <h3 className="text-primary font-semibold tracking-wider uppercase text-sm mb-3">Why Solopreneurs Struggle</h3>
                     <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                        One-person businesses break down without memory
+                        One-person businesses break down without organization
                     </h2>
                     <p className="text-lg text-gray-600 dark:text-gray-400">
                         When you are the CEO, developer, and sales team, shared context doesn't exist. Every new email is a fragmented touchpoint that requires manual data entry.
@@ -116,10 +116,10 @@ export default function Solopreneurs() {
                         <div>
                             <h3 className="text-primary font-semibold tracking-wider uppercase text-sm mb-3">Powered by LeadLoom</h3>
                             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                                Memory and mapping that transform solo sales
+                                Automation and mapping that transform solo sales
                             </h2>
                             <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                                Solopreneurs need long-term memory and zero-friction retrieval. LeadLoom routes context directly into the Notion boards you already live in.
+                                Solopreneurs need zero-friction lead capture. LeadLoom routes context directly into the Notion boards you already live in.
                             </p>
 
                             <div className="space-y-6">

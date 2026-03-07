@@ -23,7 +23,7 @@ export default function Freelancers() {
                     transition={{ duration: 0.5, delay: 0.1 }}
                     className="text-4xl md:text-5xl lg:text-7xl font-extrabold text-gray-900 dark:text-white leading-tight mb-8 tracking-tight max-w-4xl mx-auto"
                 >
-                    The automated AI inbound engine for <br className="hidden md:block" />
+                    The automated inbound engine for <br className="hidden md:block" />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-500">
                         closing premium clients
                     </span>
