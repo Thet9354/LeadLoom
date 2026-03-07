@@ -34,10 +34,8 @@ export default function Footer() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
                         <div className="col-span-1 md:col-span-2">
                             <div className="flex items-center gap-2 mb-4">
-                                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-md">
-                                    LL
-                                </div>
-                                <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">LeadLoom</span>
+                                <img src="/weave-arrow.png" alt="LeadLooms Logo" className="w-8 h-8 object-contain" />
+                                <span className="font-bold text-xl tracking-tight text-gray-900 dark:text-white">LeadLooms</span>
                             </div>
                             <p className="text-gray-500 dark:text-gray-400 max-w-xs leading-relaxed">
                                 The Notion-native edge for modern sales teams. Turn your inbox into an organized powerhouse.
@@ -64,7 +62,7 @@ export default function Footer() {
                     </div>
 
                     <div className="pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row items-center justify-between text-gray-500 dark:text-gray-400 text-sm">
-                        <p>&copy; {new Date().getFullYear()} LeadLoom. All rights reserved.</p>
+                        <p>&copy; {new Date().getFullYear()} LeadLooms. All rights reserved.</p>
                         <div className="mt-4 md:mt-0 flex space-x-4">
                             <a href="https://x.com/LeadLooms" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">Twitter</a>
                             <a href="https://www.linkedin.com/in/thetpine/" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">LinkedIn</a>
