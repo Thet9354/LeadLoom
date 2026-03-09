@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from api.database import supabase, decrypt, insert_sync_log, increment_sync_count
-from api.gmail_service import get_service, fetch_recent_emails
+from api.gmail_service import get_service, fetch_recent_emails, remove_unread_label
 from api.notion_service import create_lead
 
 def run_all_syncs():
@@ -139,14 +139,42 @@ def run_all_syncs():
         success_count = 0
         for email in emails:
              
+             raw_sender = email.get("sender", "")
+             sender_email = raw_sender
+             if "<" in raw_sender and ">" in raw_sender:
+                 import re
+                 match = re.search(r'<(.*?)>', raw_sender)
+                 if match:
+                     sender_email = match.group(1)
+
+             # Extract sender domain for context
+             is_business_domain = True
+             if "@" in sender_email:
+                 domain = sender_email.split("@")[-1].lower()
+                 if domain in ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"]:
+                     is_business_domain = False
+
              # Attempt to generate a personalized hook using Gemini
+             status = "LEAD"
+             reason = ""
+             company = "Unknown Company"
              hook = email.get("subject", "")
+             
              if ai_client and email.get("body"):
+                 domain_type = "a business domain" if is_business_domain else "a personal/free domain"
                  prompt = f"""
-                 Analyze the following email from a potential lead.
+                 You are an expert Sales Development Representative (SDR) evaluating inbound emails.
+                 Analyze the following email from a potential lead. The sender is using {domain_type}.
+                 
+                 Determine if this is a genuine lead inquiring about our services/products, 
+                 a possible lead (ambiguous but worth checking), or not a lead (spam, promotion, newsletter, internal, irrelevant).
+                 
                  Extract their company name (if obvious, else "Unknown Company").
                  Create a personalized 'Hook' sentence to use in a reply (e.g., "I saw you're interested in XYZ...").
-                 Return the output STRICTLY in this format exactly:
+                 
+                 Return the output STRICTLY in this JSON-like key-value format exactly:
+                 STATUS: [LEAD | POSSIBLE_LEAD | NOT_LEAD]
+                 REASON: [Short explanation of why]
                  COMPANY: [Company Name]
                  HOOK: [Your Hook]
 
@@ -159,9 +187,13 @@ def run_all_syncs():
                          contents=prompt
                      )
                      lines = response.text.split('\n')
-                     company = "Unknown Company"
                      for line in lines:
-                         if line.startswith("COMPANY:"):
+                         line = line.strip()
+                         if line.startswith("STATUS:"):
+                             status = line.replace("STATUS:", "").strip()
+                         elif line.startswith("REASON:"):
+                             reason = line.replace("REASON:", "").strip()
+                         elif line.startswith("COMPANY:"):
                              company = line.replace("COMPANY:", "").strip()
                          elif line.startswith("HOOK:"):
                              hook = line.replace("HOOK:", "").strip()
@@ -171,9 +203,18 @@ def run_all_syncs():
              else:
                  company = "Pending Parsing"
 
+             # Process based on STATUS
+             if status == "NOT_LEAD":
+                 print(f"    - Skipping non-lead from {sender_email}. Reason: {reason}")
+                 remove_unread_label(gmail_service, email["id"])
+                 continue
+                 
+             if status == "POSSIBLE_LEAD":
+                 hook = f"[POSSIBLE LEAD] Reason: {reason}\n\n{hook}"
+
              lead_data = {
-                 "name": email.get("sender", "Unknown"),
-                 "email": email.get("sender", ""),
+                 "name": raw_sender,
+                 "email": sender_email,
                  "company": company,
                  "context": hook
              }
@@ -186,11 +227,14 @@ def run_all_syncs():
              
              if result.get("success"):
                   success_count += 1
-                  print(f"    ✓ Synced lead from {lead_data['email']}")
-                  insert_sync_log(user_id=user_id, lead_email=lead_data['email'])
+                  print(f"    ✓ Synced lead from {sender_email} (Status: {status})")
+                  insert_sync_log(user_id=user_id, lead_email=sender_email)
                   increment_sync_count(user_id=user_id)
              else:
                   print(f"    ✗ Failed to sync lead: {result.get('error')}")
+                  
+             # Always remove the UNREAD label so we don't process it again
+             remove_unread_label(gmail_service, email["id"])
                   
         print(f"  Sync complete: {success_count}/{len(emails)} leads successfully pushed to Notion.")
 

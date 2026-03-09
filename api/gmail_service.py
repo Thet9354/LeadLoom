@@ -88,3 +88,19 @@ def fetch_recent_emails(service, max_results=10) -> list:
     except Exception as e:
         print(f"Error fetching emails: {e}")
         return []
+
+def remove_unread_label(service, message_id: str) -> bool:
+    """Removes the UNREAD label from a message."""
+    if not service:
+        return False
+        
+    try:
+        service.users().messages().modify(
+            userId='me',
+            id=message_id,
+            body={'removeLabelIds': ['UNREAD']}
+        ).execute()
+        return True
+    except Exception as e:
+        print(f"Error removing UNREAD label for message {message_id}: {e}")
+        return False
