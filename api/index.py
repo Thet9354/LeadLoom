@@ -205,7 +205,6 @@ async def auth_callback(request: Request):
         if "http://" in authorization_response and "localhost" not in authorization_response and "127.0.0.1" not in authorization_response:
              authorization_response = authorization_response.replace("http://", "https://", 1)
              
-        import os
         os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
         flow.fetch_token(authorization_response=authorization_response)
         credentials = flow.credentials
