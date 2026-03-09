@@ -139,6 +139,9 @@ def run_all_syncs():
         success_count = 0
         for email in emails:
              
+             # Acknowledge immediately to prevent concurrent polling duplicates
+             remove_unread_label(gmail_service, email["id"])
+             
              raw_sender = email.get("sender", "")
              sender_email = raw_sender
              if "<" in raw_sender and ">" in raw_sender:
@@ -206,7 +209,6 @@ def run_all_syncs():
              # Process based on STATUS
              if status == "NOT_LEAD":
                  print(f"    - Skipping non-lead from {sender_email}. Reason: {reason}")
-                 remove_unread_label(gmail_service, email["id"])
                  continue
                  
              if status == "POSSIBLE_LEAD":
@@ -232,9 +234,6 @@ def run_all_syncs():
                   increment_sync_count(user_id=user_id)
              else:
                   print(f"    ✗ Failed to sync lead: {result.get('error')}")
-                  
-             # Always remove the UNREAD label so we don't process it again
-             remove_unread_label(gmail_service, email["id"])
                   
         print(f"  Sync complete: {success_count}/{len(emails)} leads successfully pushed to Notion.")
 
