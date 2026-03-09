@@ -50,7 +50,7 @@ SCOPES = [
     'openid', 
     'https://www.googleapis.com/auth/userinfo.email', 
     'https://www.googleapis.com/auth/userinfo.profile',
-    'https://www.googleapis.com/auth/gmail.readonly'
+    'https://www.googleapis.com/auth/gmail.modify'
 ]
 REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "http://127.0.0.1:8000/auth/callback")
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
