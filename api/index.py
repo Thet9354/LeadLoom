@@ -58,7 +58,7 @@ BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 
 # In-memory store for OAuth flow data (code_verifier) between requests
-# In production, use Redis or a session store
+# We preserve this for backwards compatibility but rely on cookies now
 _oauth_flows = {}
 
 @app.get("/auth/google")
@@ -108,12 +108,17 @@ async def auth_google(user_id: str = None):
             state=custom_state
         )
         
-        # Store the code_verifier so the callback can use it
-        _oauth_flows[custom_state] = {
-            "code_verifier": flow.code_verifier,
-        }
-
-        return RedirectResponse(authorization_url)
+        # Store the code_verifier so the callback can use it across Serverless functions
+        response = RedirectResponse(authorization_url)
+        response.set_cookie(
+            key=f"cv_{state}", 
+            value=flow.code_verifier, 
+            httponly=True, 
+            secure=True, 
+            samesite="none", 
+            max_age=3600
+        )
+        return response
     except FileNotFoundError:
         if os.environ.get("ENV", "development") != "development":
             return JSONResponse(status_code=500, content={"error": "OAuth credentials not configured"})
@@ -189,10 +194,12 @@ async def auth_callback(request: Request):
 
         flow.redirect_uri = REDIRECT_URI
         
-        # Restore the code_verifier from the initial /auth/google request
-        stored_flow = _oauth_flows.pop(custom_state, None)
-        if stored_flow and stored_flow.get("code_verifier"):
-            flow.code_verifier = stored_flow["code_verifier"]
+        # Restore the code_verifier from the initial /auth/google request cookie
+        code_verifier = request.cookies.get(f"cv_{state}")
+        if code_verifier:
+            flow.code_verifier = code_verifier
+        else:
+            print("Warning: code_verifier cookie not found. PKCE flow may fail.")
         
         authorization_response = str(request.url)
         if "http://" in authorization_response and "localhost" not in authorization_response and "127.0.0.1" not in authorization_response:
@@ -242,7 +249,8 @@ async def auth_callback(request: Request):
     except Exception as e:
         print(f"OAuth Callback Error: {e}")
         from urllib.parse import quote
-        return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote('Gmail connection failed. Please try again.')}")
+        error_msg = str(e)[:150] # Send first 150 chars of error for debugging
+        return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote(f'OAuth failed: {error_msg}')}")
 
 
 @app.post("/api/user/notion-config")
