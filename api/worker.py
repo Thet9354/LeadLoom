@@ -157,8 +157,9 @@ def run_all_syncs():
                  if domain in ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"]:
                      is_business_domain = False
 
-             status = "LEAD"
-             reason = ""
+             # Default fallback is NOT_LEAD to prevent spam syncing on API failure
+             status = "NOT_LEAD"
+             reason = "Fallback: Missing body content or AI parsing failed."
              company = "Unknown Company"
              priority = "Medium"
              lead_source = ["Unknown"]
@@ -176,6 +177,7 @@ def run_all_syncs():
                  
                  Determine if this is a genuine lead inquiring about our services/products, 
                  a possible lead (ambiguous but worth checking), or not a lead (spam, promotion, newsletter, internal, irrelevant).
+                 CRITICAL RULE: If the email is a newsletter, promotional offer TO us, automated receipt, marketing material, or vendor pitch, you MUST output STATUS: NOT_LEAD.
                  
                  Extract their company name (if obvious, else "Unknown Company").
                  Create a personalized 'Hook' sentence to use in a reply (e.g., "I saw you're interested in XYZ...").
