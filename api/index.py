@@ -206,7 +206,15 @@ async def auth_callback(request: Request):
              authorization_response = authorization_response.replace("http://", "https://", 1)
              
         os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
-        flow.fetch_token(authorization_response=authorization_response)
+        
+        try:
+            flow.fetch_token(authorization_response=authorization_response)
+        except Exception as fetch_err:
+            print(f"Fetch Token Error: {fetch_err}")
+            from urllib.parse import quote
+            err_str = str(fetch_err)[:150]
+            return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote(f'Google Token Error: {err_str}')}")
+            
         credentials = flow.credentials
         
         # Get user email
@@ -242,9 +250,9 @@ async def auth_callback(request: Request):
                         db_err = db_result.get('error', '')[:100]
                         return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote(f'Could not save Gmail credentials. DB Error: {db_err}')}")
         else:
-            print("Warning: No refresh token returned. User may need to revoke and re-connect.")
+            print(f"Warning: No refresh token returned. Creds dictionary: {credentials.to_json()[:200]}")
             from urllib.parse import quote
-            return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote('Google did not return a refresh token. Please revoke LeadLooms access in your Google Account settings and try again.')}")
+            return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote('Google authorized but did not provide a refresh token. Try revoking app access and reconnecting.')}")
             
         return RedirectResponse(f"{FRONTEND_URL}/dashboard?step=1&success=true")
 
