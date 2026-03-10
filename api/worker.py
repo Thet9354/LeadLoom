@@ -183,7 +183,7 @@ def run_all_syncs():
                  Also extract or estimate the following 6 data points:
                  - PRIORITY: Must be exactly "High", "Medium", or "Low" (High = ready to buy/book demo, Low = just asking questions/partnerships)
                  - LEAD_SOURCE: [Comma-separated list, e.g., "Google" or "Referral". If no source is mentioned, you MUST output exactly "LeadLooms Website"]
-                 - LEAD_STAGE: Evaluate the email and pick exactly ONE of these 9 stages: "New Inbound", "Needs Research", "Emailed / Attempted", "Meeting Booked", "Negotiating", "Onboarding", "Closed Won", "Closed Lost", "Disqualified". (If it's a first touch, pick "New Inbound". If it's an automated Calendly booking email, pick "Meeting Booked").
+                 - LEAD_STAGE: Evaluate the email and pick exactly ONE of these 9 stages: "New Inbound", "Needs Research", "Emailed / Attempted", "Meeting Booked", "Negotiating", "Onboarding", "Closed Won", "Closed Lost", "Disqualified". (RULES: If the subject contains "RE:" or they ask about pricing/customization, pick "Negotiating". If it's a Calendly booking, pick "Meeting Booked". Otherwise, default to "New Inbound").
                  - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
                  - PAIN_POINT: [What problem are they trying to solve?]
                  - NEXT_STEPS: [Actionable next step for the sales rep]
