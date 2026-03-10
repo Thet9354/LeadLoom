@@ -157,10 +157,14 @@ def run_all_syncs():
                  if domain in ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"]:
                      is_business_domain = False
 
-             # Attempt to generate a personalized hook using Gemini
              status = "LEAD"
              reason = ""
              company = "Unknown Company"
+             priority = "Medium"
+             lead_source = "Unknown"
+             value = "Unknown"
+             pain_point = "None identified"
+             next_steps = "Review inquiry"
              hook = email.get("subject", "")
              
              if ai_client and email.get("body"):
@@ -175,10 +179,22 @@ def run_all_syncs():
                  Extract their company name (if obvious, else "Unknown Company").
                  Create a personalized 'Hook' sentence to use in a reply (e.g., "I saw you're interested in XYZ...").
                  
+                 Also extract or estimate the following 5 data points:
+                 - PRIORITY: [High | Medium | Low] (High = ready to buy/book demo, Low = just asking questions/partnerships)
+                 - LEAD_SOURCE: [How did they find us? e.g., "Google", "Facebook", "Referral", or "Unknown"]
+                 - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
+                 - PAIN_POINT: [What problem are they trying to solve?]
+                 - NEXT_STEPS: [Actionable next step for the sales rep]
+                 
                  Return the output STRICTLY in this JSON-like key-value format exactly:
                  STATUS: [LEAD | POSSIBLE_LEAD | NOT_LEAD]
                  REASON: [Short explanation of why]
                  COMPANY: [Company Name]
+                 PRIORITY: [Priority Level]
+                 LEAD_SOURCE: [Source]
+                 VALUE: [Estimated Value or Size]
+                 PAIN_POINT: [Pain Point]
+                 NEXT_STEPS: [Next Steps]
                  HOOK: [Your Hook]
 
                  Subject: {email.get("subject", "")}
@@ -198,6 +214,16 @@ def run_all_syncs():
                              reason = line.replace("REASON:", "").strip()
                          elif line.startswith("COMPANY:"):
                              company = line.replace("COMPANY:", "").strip()
+                         elif line.startswith("PRIORITY:"):
+                             priority = line.replace("PRIORITY:", "").strip()
+                         elif line.startswith("LEAD_SOURCE:"):
+                             lead_source = line.replace("LEAD_SOURCE:", "").strip()
+                         elif line.startswith("VALUE:"):
+                             value = line.replace("VALUE:", "").strip()
+                         elif line.startswith("PAIN_POINT:"):
+                             pain_point = line.replace("PAIN_POINT:", "").strip()
+                         elif line.startswith("NEXT_STEPS:"):
+                             next_steps = line.replace("NEXT_STEPS:", "").strip()
                          elif line.startswith("HOOK:"):
                              hook = line.replace("HOOK:", "").strip()
                  except Exception as e:
@@ -218,6 +244,11 @@ def run_all_syncs():
                  "name": raw_sender,
                  "email": sender_email,
                  "company": company,
+                 "priority": priority,
+                 "lead_source": lead_source,
+                 "value": value,
+                 "pain_point": pain_point,
+                 "next_steps": next_steps,
                  "context": hook
              }
              

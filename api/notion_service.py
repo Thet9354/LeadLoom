@@ -81,6 +81,51 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
                             }
                         }
                     ]
+                },
+                "Priority": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": lead_data.get("priority", "Medium")
+                            }
+                        }
+                    ]
+                },
+                "Lead Source": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": lead_data.get("lead_source", "Unknown")
+                            }
+                        }
+                    ]
+                },
+                "Value": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": lead_data.get("value", "Unknown")
+                            }
+                        }
+                    ]
+                },
+                "Pain Point": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": lead_data.get("pain_point", "None identified")
+                            }
+                        }
+                    ]
+                },
+                "Next Steps": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": lead_data.get("next_steps", "")
+                            }
+                        }
+                    ]
                 }
             }
         )
