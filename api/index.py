@@ -239,7 +239,8 @@ async def auth_callback(request: Request):
                     if "error" in db_result:
                         print(f"Upsert also failed: {db_result['error']}")
                         from urllib.parse import quote
-                        return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote('Could not save Gmail credentials. Please try again.')}")
+                        db_err = db_result.get('error', '')[:100]
+                        return RedirectResponse(f"{FRONTEND_URL}/dashboard?error={quote(f'Could not save Gmail credentials. DB Error: {db_err}')}")
         else:
             print("Warning: No refresh token returned. User may need to revoke and re-connect.")
             from urllib.parse import quote
