@@ -7,9 +7,24 @@ import { API_URL } from '../config';
 const PLAN_LIMITS = { starter: 30, plus: 100, pro: Infinity };
 
 export default function Dashboard({ session }) {
-    const [syncLogs, setSyncLogs] = useState([]);
-    const [userProfile, setUserProfile] = useState(null);
-    const [dashboardStats, setDashboardStats] = useState(null);
+    const [syncLogs, setSyncLogs] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`ll_logs_${session?.user?.id || 'guest'}`);
+            return cached ? JSON.parse(cached) : [];
+        } catch (e) { return []; }
+    });
+    const [userProfile, setUserProfile] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`ll_profile_${session?.user?.id || 'guest'}`);
+            return cached ? JSON.parse(cached) : null;
+        } catch (e) { return null; }
+    });
+    const [dashboardStats, setDashboardStats] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`ll_stats_${session?.user?.id || 'guest'}`);
+            return cached ? JSON.parse(cached) : null;
+        } catch (e) { return null; }
+    });
 
     // Onboarding state — derived from profile, not manually tracked
     const [showConfigModal, setShowConfigModal] = useState(false);
@@ -86,8 +101,10 @@ export default function Dashboard({ session }) {
             try {
                 const logRes = await fetch(`${API_URL}/api/user/sync-logs?user_id=${session.user.id}`);
                 const logData = await logRes.json();
-                if (logData?.success && Array.isArray(logData?.data)) setSyncLogs(logData.data);
-                else setSyncLogs([]);
+                if (logData?.success && Array.isArray(logData?.data)) {
+                    setSyncLogs(logData.data);
+                    localStorage.setItem(`ll_logs_${session.user.id}`, JSON.stringify(logData.data));
+                } else setSyncLogs([]);
             } catch (err) {
                 console.error("Failed to fetch sync logs:", err);
             }
@@ -97,6 +114,7 @@ export default function Dashboard({ session }) {
                 const profData = await profRes.json();
                 if (profData?.success) {
                     setUserProfile(profData.data);
+                    localStorage.setItem(`ll_profile_${session.user.id}`, JSON.stringify(profData.data));
                 }
             } catch (err) {
                 console.error("Failed to fetch profile:", err);
@@ -107,6 +125,7 @@ export default function Dashboard({ session }) {
                 const statsData = await statsRes.json();
                 if (statsData?.success) {
                     setDashboardStats(statsData.data);
+                    localStorage.setItem(`ll_stats_${session.user.id}`, JSON.stringify(statsData.data));
                 }
             } catch (err) {
                 console.error("Failed to fetch stats:", err);
