@@ -181,7 +181,7 @@ def run_all_syncs():
                  
                  Also extract or estimate the following 5 data points:
                  - PRIORITY: [High | Medium | Low] (High = ready to buy/book demo, Low = just asking questions/partnerships)
-                 - LEAD_SOURCE: [How did they find us? e.g., "Google", "Facebook", "Referral", or "Unknown"]
+                 - LEAD_SOURCE: [Comma-separated list, e.g., "Google, Facebook" or "Referral" or "Unknown"]
                  - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
                  - PAIN_POINT: [What problem are they trying to solve?]
                  - NEXT_STEPS: [Actionable next step for the sales rep]
@@ -217,7 +217,9 @@ def run_all_syncs():
                          elif line.startswith("PRIORITY:"):
                              priority = line.replace("PRIORITY:", "").strip()
                          elif line.startswith("LEAD_SOURCE:"):
-                             lead_source = line.replace("LEAD_SOURCE:", "").strip()
+                             val = line.replace("LEAD_SOURCE:", "").strip()
+                             # Parse comma separated for Multi-Select
+                             lead_source = [src.strip() for src in val.split(',') if src.strip()]
                          elif line.startswith("VALUE:"):
                              value = line.replace("VALUE:", "").strip()
                          elif line.startswith("PAIN_POINT:"):

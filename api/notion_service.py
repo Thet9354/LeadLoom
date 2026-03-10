@@ -83,22 +83,17 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
                     ]
                 },
                 "Priority": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("priority", "Medium")
-                            }
-                        }
-                    ]
+                    "select": {
+                        "name": lead_data.get("priority", "Medium")
+                    }
                 },
                 "Lead Source": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("lead_source", "Unknown")
-                            }
-                        }
-                    ]
+                    "multi_select": [{"name": src} for src in lead_data.get("lead_source", ["Unknown"])]
+                },
+                "Lead Progress": {
+                    "status": {
+                        "name": "New Lead"  # Let Notion's default new status take over, or explicitly map it if needed
+                    }
                 },
                 "Value": {
                     "rich_text": [
