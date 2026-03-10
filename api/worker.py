@@ -161,7 +161,8 @@ def run_all_syncs():
              reason = ""
              company = "Unknown Company"
              priority = "Medium"
-             lead_source = "Unknown"
+             lead_source = ["Unknown"]
+             lead_stage = "New Inbound"
              value = "Unknown"
              pain_point = "None identified"
              next_steps = "Review inquiry"
@@ -179,9 +180,10 @@ def run_all_syncs():
                  Extract their company name (if obvious, else "Unknown Company").
                  Create a personalized 'Hook' sentence to use in a reply (e.g., "I saw you're interested in XYZ...").
                  
-                 Also extract or estimate the following 5 data points:
+                 Also extract or estimate the following 6 data points:
                  - PRIORITY: Must be exactly "High", "Medium", or "Low" (High = ready to buy/book demo, Low = just asking questions/partnerships)
                  - LEAD_SOURCE: [Comma-separated list, e.g., "Google" or "Referral". If no source is mentioned, you MUST output exactly "LeadLooms Website"]
+                 - LEAD_STAGE: Evaluate the email and pick exactly ONE of these 9 stages: "New Inbound", "Needs Research", "Emailed / Attempted", "Meeting Booked", "Negotiating", "Onboarding", "Closed Won", "Closed Lost", "Disqualified". (If it's a first touch, pick "New Inbound". If it's an automated Calendly booking email, pick "Meeting Booked").
                  - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
                  - PAIN_POINT: [What problem are they trying to solve?]
                  - NEXT_STEPS: [Actionable next step for the sales rep]
@@ -192,6 +194,7 @@ def run_all_syncs():
                  COMPANY: [Company Name]
                  PRIORITY: [Priority Level]
                  LEAD_SOURCE: [Source]
+                 LEAD_STAGE: [Chosen Stage]
                  VALUE: [Estimated Value or Size]
                  PAIN_POINT: [Pain Point]
                  NEXT_STEPS: [Next Steps]
@@ -220,6 +223,8 @@ def run_all_syncs():
                              val = line.replace("LEAD_SOURCE:", "").strip()
                              # Parse comma separated for Multi-Select
                              lead_source = [src.strip() for src in val.split(',') if src.strip()]
+                         elif line.startswith("LEAD_STAGE:"):
+                             lead_stage = line.replace("LEAD_STAGE:", "").strip()
                          elif line.startswith("VALUE:"):
                              value = line.replace("VALUE:", "").strip()
                          elif line.startswith("PAIN_POINT:"):
@@ -248,6 +253,7 @@ def run_all_syncs():
                  "company": company,
                  "priority": priority,
                  "lead_source": lead_source,
+                 "lead_stage": lead_stage,
                  "value": value,
                  "pain_point": pain_point,
                  "next_steps": next_steps,

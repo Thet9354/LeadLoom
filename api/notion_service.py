@@ -92,7 +92,7 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
                 },
                 "Lead Stage": {
                     "select": {
-                        "name": "New Inbound"
+                        "name": lead_data.get("lead_stage", "New Inbound")
                     }
                 },
                 "Value": {
