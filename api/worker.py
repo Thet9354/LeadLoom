@@ -180,8 +180,8 @@ def run_all_syncs():
                  Create a personalized 'Hook' sentence to use in a reply (e.g., "I saw you're interested in XYZ...").
                  
                  Also extract or estimate the following 5 data points:
-                 - PRIORITY: [High | Medium | Low] (High = ready to buy/book demo, Low = just asking questions/partnerships)
-                 - LEAD_SOURCE: [Comma-separated list, e.g., "Google, Facebook" or "Referral" or "Unknown"]
+                 - PRIORITY: Must be exactly "High", "Medium", or "Low" (High = ready to buy/book demo, Low = just asking questions/partnerships)
+                 - LEAD_SOURCE: [Comma-separated list, e.g., "Google" or "Referral". If no source is mentioned, you MUST output exactly "LeadLooms Website"]
                  - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
                  - PAIN_POINT: [What problem are they trying to solve?]
                  - NEXT_STEPS: [Actionable next step for the sales rep]

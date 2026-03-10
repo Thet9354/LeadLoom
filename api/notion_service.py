@@ -90,6 +90,11 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
                 "Lead Source": {
                     "multi_select": [{"name": src} for src in lead_data.get("lead_source", ["Unknown"])]
                 },
+                "Lead Stage": {
+                    "select": {
+                        "name": "New Inbound"
+                    }
+                },
                 "Value": {
                     "rich_text": [
                         {
