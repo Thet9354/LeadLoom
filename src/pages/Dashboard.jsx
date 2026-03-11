@@ -3,6 +3,41 @@ import { Database, AlertTriangle, CheckCircle, Mail, Circle, X, Save, AlertCircl
 import { useLocation, Link } from "react-router-dom";
 import Breadcrumb from "../components/Breadcrumb";
 import { API_URL } from '../config';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#64748b'];
+
+const AnimatedNumber = ({ value }) => {
+    const [displayValue, setDisplayValue] = useState(0);
+
+    useEffect(() => {
+        const end = parseInt(value, 10);
+        if (isNaN(end)) return;
+        if (end === 0) {
+            setDisplayValue(0);
+            return;
+        }
+
+        let start = 0;
+        const duration = 1200; // ms
+        const increment = end / (duration / 16); // 60fps
+
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= end) {
+                setDisplayValue(end);
+                clearInterval(timer);
+            } else {
+                setDisplayValue(Math.floor(start));
+            }
+        }, 16);
+
+        return () => clearInterval(timer);
+    }, [value]);
+
+    return <span>{displayValue}</span>;
+};
+
 
 const PLAN_LIMITS = { starter: 30, plus: 100, pro: Infinity };
 
@@ -286,37 +321,123 @@ export default function Dashboard({ session }) {
                     {/* Top Stats Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {/* Total Leads */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Leads</h3>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{dashboardStats?.total_leads || 0}</p>
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-blue-500/50 hover:shadow-blue-500/10 transition-all duration-300 group overflow-hidden relative">
+                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Leads Synced</h3>
+                            <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                                <AnimatedNumber value={dashboardStats?.total_leads || 0} />
+                            </p>
                         </div>
 
                         {/* Sync Health */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Sync Health</h3>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{dashboardStats?.sync_health || "99.2%"}</p>
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-green-500/50 hover:shadow-green-500/10 transition-all duration-300 group overflow-hidden relative">
+                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-green-500/10 rounded-full blur-xl group-hover:bg-green-500/20 transition-all"></div>
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">System Health</h3>
+                            <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-400 tracking-tight">
+                                {dashboardStats?.sync_health || "99.2%"}
+                            </p>
                         </div>
 
                         {/* Plan Limit */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Plan Limit</h3>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">{syncCount}/{planType === "pro" ? "∞" : planLimit}</p>
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-orange-500/50 hover:shadow-orange-500/10 transition-all duration-300 group overflow-hidden relative">
+                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/20 transition-all"></div>
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly Usage</h3>
+                            <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                                <AnimatedNumber value={syncCount} />
+                                <span className="text-2xl text-gray-400 font-medium">/{planType === "pro" ? "∞" : planLimit}</span>
+                            </p>
                         </div>
 
                         {/* Trial Status */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-2xl flex flex-col justify-between h-32 hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Trial Status</h3>
-                            <p className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
-                                {planType === "pro" && !trialExpired ? `${daysRemaining} Days Left` : planType === "pro" ? "Expired" : "Active"}
+                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-purple-500/50 hover:shadow-purple-500/10 transition-all duration-300 group overflow-hidden relative">
+                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
+                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Account Status</h3>
+                            <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
+                                {planType === "pro" && !trialExpired ? `${daysRemaining}D` : planType === "pro" ? "Expired" : "Active"}
                             </p>
                         </div>
                     </div>
+
+                    {/* Analytics Charts Row (Only shows if Notion Analytics are present) */}
+                    {dashboardStats?.analytics && dashboardStats?.analytics?.success && (
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            {/* Trend Line Chart (Spans 2 columns) */}
+                            <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+                                <div className="mb-4">
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Lead Velocity</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">Daily inbound activity plotted over time.</p>
+                                </div>
+                                <div className="flex-1 w-full h-full min-h-0">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={dashboardStats.analytics.trend}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.2} />
+                                            <XAxis dataKey="date" stroke="#888" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(val) => {
+                                                const d = new Date(val);
+                                                return `${d.getMonth() + 1}/${d.getDate()}`;
+                                            }} />
+                                            <YAxis stroke="#888" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', borderColor: '#374151', borderRadius: '12px', color: '#fff', backdropFilter: 'blur(8px)' }} cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }} />
+                                            <Line type="monotone" dataKey="leads" name="New Leads" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, fill: '#1e3a8a', strokeWidth: 2, stroke: '#3b82f6' }} activeDot={{ r: 7, strokeWidth: 0, fill: '#60a5fa' }} animationDuration={1500} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            {/* Pipeline Distribution (Pie) */}
+                            <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-300 dark:hover:border-gray-700 transition-colors relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -z-10"></div>
+                                <div>
+                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center justify-between">
+                                        Pipeline Distribution
+                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">{dashboardStats.analytics.total_fetched} Leads</span>
+                                    </h3>
+                                </div>
+                                <div className="flex-1 w-full h-full min-h-0 flex items-center justify-center relative mt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={dashboardStats.analytics.pipeline}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={65}
+                                                outerRadius={90}
+                                                paddingAngle={4}
+                                                dataKey="value"
+                                                stroke="none"
+                                                animationDuration={1500}
+                                                cornerRadius={4}
+                                            >
+                                                {dashboardStats.analytics.pipeline.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', borderColor: '#374151', borderRadius: '12px', color: '#fff', backdropFilter: 'blur(8px)' }} itemStyle={{ color: '#fff' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    {/* Center text for conversion rate */}
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mb-2">
+                                        <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight"><AnimatedNumber value={dashboardStats.analytics.conversion_rate} />%</span>
+                                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mt-0.5">Win Rate</span>
+                                    </div>
+                                </div>
+                                {/* Custom Legend */}
+                                <div className="flex flex-wrap gap-2.5 mt-2 justify-center pb-2">
+                                    {dashboardStats.analytics.pipeline.map((entry, index) => (
+                                        <div key={index} className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-400">
+                                            <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                            <span className="truncate max-w-[80px]">{entry.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Bottom Row */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
                         {/* Sync Feed (Spans 2 columns) */}
-                        <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-full min-h-[400px]">
+                        <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden flex flex-col h-full min-h-[400px]">
                             <div className="p-6 border-b border-gray-100 dark:border-gray-800">
                                 <h3 className="text-sm font-medium text-gray-900 dark:text-white">Recent Sync Activity</h3>
                             </div>
@@ -358,7 +479,7 @@ export default function Dashboard({ session }) {
                         </div>
 
                         {/* System Health Sidebar */}
-                        <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-2xl overflow-hidden h-fit">
+                        <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden h-fit">
                             <div className="p-6 border-b border-gray-100 dark:border-gray-800">
                                 <h3 className="text-sm font-medium text-gray-900 dark:text-white">System Health</h3>
                             </div>

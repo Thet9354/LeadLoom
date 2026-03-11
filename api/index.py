@@ -334,6 +334,8 @@ async def get_sync_logs(user_id: str):
 async def get_dashboard_stats(user_id: str):
     """Fetches real-time stats and system health for the Dashboard Command Center."""
     from api.database import supabase, get_user_config
+    from api.notion_service import get_notion_analytics
+    
     if not supabase:
         return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
         
@@ -349,10 +351,19 @@ async def get_dashboard_stats(user_id: str):
         user_config = get_user_config(user_id)
         gmail_connected = False
         notion_linked = False
+        notion_analytics = None
         
         if "error" not in user_config:
             gmail_connected = bool(user_config.get("gmail_refresh_token"))
-            notion_linked = bool(user_config.get("notion_db_id"))
+            notion_db_id = user_config.get("notion_db_id")
+            notion_api_key = user_config.get("notion_api_key")
+            notion_linked = bool(notion_db_id)
+            
+            # Fetch Notion Analytics if linked
+            if notion_linked and notion_api_key:
+                analytics_resp = get_notion_analytics(notion_api_key, notion_db_id)
+                if analytics_resp.get("success"):
+                    notion_analytics = analytics_resp
             
         return {
             "success": True, 
@@ -362,7 +373,8 @@ async def get_dashboard_stats(user_id: str):
                 "system_health": {
                     "gmail_connected": gmail_connected,
                     "notion_linked": notion_linked
-                }
+                },
+                "analytics": notion_analytics
             }
         }
     except Exception as e:

@@ -128,3 +128,70 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
     except Exception as e:
         print(f"Error creating Notion lead: {e}")
         return {"error": str(e)}
+
+def get_notion_analytics(api_key: str, db_id: str) -> dict:
+    """Fetch recent leads from Notion and calculate pipeline stats."""
+    if not api_key or not db_id:
+        return {"error": "Missing credentials"}
+    try:
+        clean_db_id = _extract_notion_db_id(db_id)
+        if not clean_db_id:
+            return {"error": "Invalid Database ID format"}
+            
+        client = notion_client.Client(auth=api_key)
+        
+        # Query the database
+        results = client.databases.query(
+            **{
+                "database_id": clean_db_id,
+                "page_size": 100,
+            }
+        )
+        
+        pages = results.get("results", [])
+        
+        pipeline_distribution = {}
+        trend_data_map = {}
+        closed_won = 0
+        total_valid = len(pages)
+        
+        for page in pages:
+            props = page.get("properties", {})
+            created_time = page.get("created_time")
+            
+            # Extract stage safely
+            stage = "New Inbound"
+            if "Lead Stage" in props and props["Lead Stage"].get("select") and props["Lead Stage"]["select"]:
+                stage = props["Lead Stage"]["select"].get("name", "New Inbound")
+                
+            pipeline_distribution[stage] = pipeline_distribution.get(stage, 0) + 1
+            if stage == "Closed Won":
+                closed_won += 1
+                
+            # Extract trend (YYYY-MM-DD)
+            if created_time:
+                date_str = created_time.split("T")[0]
+                trend_data_map[date_str] = trend_data_map.get(date_str, 0) + 1
+
+        # Format trend data
+        sorted_dates = sorted(trend_data_map.keys())
+        trend_data = [{"date": d, "leads": trend_data_map[d]} for d in sorted_dates]
+        
+        # Format pipeline distribution for Recharts Pie (name, value)
+        pipeline_arr = [{"name": k, "value": v} for k, v in pipeline_distribution.items()]
+        
+        # Calculate conversion rate
+        conversion_rate = 0
+        if total_valid > 0:
+            conversion_rate = round((closed_won / total_valid) * 100, 1)
+            
+        return {
+            "success": True,
+            "pipeline": pipeline_arr,
+            "trend": trend_data,
+            "conversion_rate": conversion_rate,
+            "total_fetched": total_valid
+        }
+    except Exception as e:
+        print(f"Notion Analytics Error: {e}")
+        return {"error": str(e)}
