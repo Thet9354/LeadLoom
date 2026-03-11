@@ -60,6 +60,18 @@ export default function Dashboard({ session }) {
             return cached ? JSON.parse(cached) : null;
         } catch (e) { return null; }
     });
+    const [volumeData, setVolumeData] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`ll_volume_${session?.user?.id || 'guest'}`);
+            return cached ? JSON.parse(cached) : null;
+        } catch (e) { return null; }
+    });
+    const [distributionData, setDistributionData] = useState(() => {
+        try {
+            const cached = localStorage.getItem(`ll_dist_${session?.user?.id || 'guest'}`);
+            return cached ? JSON.parse(cached) : null;
+        } catch (e) { return null; }
+    });
 
     // Onboarding state — derived from profile, not manually tracked
     const [showConfigModal, setShowConfigModal] = useState(false);
@@ -164,6 +176,28 @@ export default function Dashboard({ session }) {
                 }
             } catch (err) {
                 console.error("Failed to fetch stats:", err);
+            }
+
+            try {
+                const volRes = await fetch(`${API_URL}/api/analytics/volume?user_id=${session.user.id}`);
+                const volData = await volRes.json();
+                if (volData?.success) {
+                    setVolumeData(volData.data);
+                    localStorage.setItem(`ll_volume_${session.user.id}`, JSON.stringify(volData.data));
+                }
+            } catch (err) {
+                console.error("Failed to fetch volume data:", err);
+            }
+
+            try {
+                const distRes = await fetch(`${API_URL}/api/analytics/distribution?user_id=${session.user.id}`);
+                const distData = await distRes.json();
+                if (distData?.success) {
+                    setDistributionData(distData.data);
+                    localStorage.setItem(`ll_dist_${session.user.id}`, JSON.stringify(distData.data));
+                }
+            } catch (err) {
+                console.error("Failed to fetch distribution data:", err);
             }
         };
         fetchData();
@@ -358,45 +392,51 @@ export default function Dashboard({ session }) {
                         </div>
                     </div>
 
-                    {/* Analytics Charts Row (Only shows if Notion Analytics are present) */}
-                    {dashboardStats?.analytics && dashboardStats?.analytics?.success && (
+                    {/* Analytics Charts Row */}
+                    {(volumeData || distributionData) && (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Trend Line Chart (Spans 2 columns) */}
-                            <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-300 dark:hover:border-gray-700 transition-colors">
+                            {/* Trend Area Chart (Spans 2 columns) */}
+                            <div className="lg:col-span-2 bg-[#111111] border border-gray-800 rounded-xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-700 transition-colors">
                                 <div className="mb-4">
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Lead Velocity</h3>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Daily inbound activity plotted over time.</p>
+                                    <h3 className="text-sm font-semibold text-white">Lead Momentum</h3>
+                                    <p className="text-xs text-gray-400">Synced inbound activity over the last 14 days.</p>
                                 </div>
                                 <div className="flex-1 w-full h-full min-h-0">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={dashboardStats.analytics.trend}>
+                                        <AreaChart data={volumeData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
                                             <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.2} />
                                             <XAxis dataKey="date" stroke="#888" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(val) => {
                                                 const d = new Date(val);
                                                 return `${d.getMonth() + 1}/${d.getDate()}`;
-                                            }} />
+                                            }} minTickGap={20} />
                                             <YAxis stroke="#888" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', borderColor: '#374151', borderRadius: '12px', color: '#fff', backdropFilter: 'blur(8px)' }} cursor={{ stroke: '#3b82f6', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                                            <Line type="monotone" dataKey="leads" name="New Leads" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, fill: '#1e3a8a', strokeWidth: 2, stroke: '#3b82f6' }} activeDot={{ r: 7, strokeWidth: 0, fill: '#60a5fa' }} animationDuration={1500} />
-                                        </LineChart>
+                                            <Tooltip contentStyle={{ backgroundColor: '#111111', borderColor: '#333', borderRadius: '12px', color: '#fff' }} cursor={{ stroke: '#4b5563', strokeWidth: 1, strokeDasharray: '4 4' }} itemStyle={{ color: '#fff', fontWeight: 600 }} />
+                                            <Area type="monotone" dataKey="leads" name="New Leads" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" animationDuration={1500} />
+                                        </AreaChart>
                                     </ResponsiveContainer>
                                 </div>
                             </div>
 
-                            {/* Pipeline Distribution (Pie) */}
-                            <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-300 dark:hover:border-gray-700 transition-colors relative overflow-hidden">
+                            {/* Intent / Distribution (Pie) */}
+                            <div className="lg:col-span-1 bg-[#111111] border border-gray-800 rounded-xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-700 transition-colors relative overflow-hidden">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -z-10"></div>
                                 <div>
-                                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white flex items-center justify-between">
-                                        Pipeline Distribution
-                                        <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">{dashboardStats.analytics.total_fetched} Leads</span>
+                                    <h3 className="text-sm font-semibold text-white flex items-center justify-between">
+                                        Source Distribution
                                     </h3>
+                                    <p className="text-xs text-gray-400">Business vs Personal inbound ratios.</p>
                                 </div>
                                 <div className="flex-1 w-full h-full min-h-0 flex items-center justify-center relative mt-2">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
-                                                data={dashboardStats.analytics.pipeline}
+                                                data={distributionData || []}
                                                 cx="50%"
                                                 cy="50%"
                                                 innerRadius={65}
@@ -407,25 +447,20 @@ export default function Dashboard({ session }) {
                                                 animationDuration={1500}
                                                 cornerRadius={4}
                                             >
-                                                {dashboardStats.analytics.pipeline.map((entry, index) => (
+                                                {(distributionData || []).map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                 ))}
                                             </Pie>
-                                            <Tooltip contentStyle={{ backgroundColor: 'rgba(17, 24, 39, 0.9)', borderColor: '#374151', borderRadius: '12px', color: '#fff', backdropFilter: 'blur(8px)' }} itemStyle={{ color: '#fff' }} />
+                                            <Tooltip contentStyle={{ backgroundColor: '#111111', borderColor: '#333', borderRadius: '12px', color: '#fff' }} itemStyle={{ color: '#fff', fontWeight: 600 }} />
                                         </PieChart>
                                     </ResponsiveContainer>
-                                    {/* Center text for conversion rate */}
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mb-2">
-                                        <span className="text-3xl font-black text-gray-900 dark:text-white tracking-tight"><AnimatedNumber value={dashboardStats.analytics.conversion_rate} />%</span>
-                                        <span className="text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-widest mt-0.5">Win Rate</span>
-                                    </div>
                                 </div>
                                 {/* Custom Legend */}
-                                <div className="flex flex-wrap gap-2.5 mt-2 justify-center pb-2">
-                                    {dashboardStats.analytics.pipeline.map((entry, index) => (
-                                        <div key={index} className="flex items-center gap-1.5 text-[11px] font-medium text-gray-600 dark:text-gray-400">
-                                            <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                            <span className="truncate max-w-[80px]">{entry.name}</span>
+                                <div className="flex flex-wrap gap-3 mt-2 justify-center pb-2">
+                                    {(distributionData || []).map((entry, index) => (
+                                        <div key={index} className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
+                                            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                                            <span className="truncate max-w-[100px]">{entry.name} ({entry.value})</span>
                                         </div>
                                     ))}
                                 </div>

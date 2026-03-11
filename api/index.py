@@ -355,15 +355,7 @@ async def get_dashboard_stats(user_id: str):
         
         if "error" not in user_config:
             gmail_connected = bool(user_config.get("gmail_refresh_token"))
-            notion_db_id = user_config.get("notion_db_id")
-            notion_api_key = user_config.get("notion_api_key")
-            notion_linked = bool(notion_db_id)
-            
-            # Fetch Notion Analytics if linked
-            if notion_linked and notion_api_key:
-                analytics_resp = get_notion_analytics(notion_api_key, notion_db_id)
-                if analytics_resp.get("success"):
-                    notion_analytics = analytics_resp
+            notion_linked = bool(user_config.get("notion_db_id"))
             
         return {
             "success": True, 
@@ -373,10 +365,82 @@ async def get_dashboard_stats(user_id: str):
                 "system_health": {
                     "gmail_connected": gmail_connected,
                     "notion_linked": notion_linked
-                },
-                "analytics": notion_analytics
+                }
             }
         }
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/analytics/volume")
+async def get_analytics_volume(user_id: str):
+    """Fetches the lead sync volume over the last 14 days, grouped by date."""
+    from api.database import supabase
+    from datetime import datetime, timedelta
+    
+    if not supabase:
+        return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "user_id is required"})
+        
+    try:
+        # Fetch the last 14 days of logs
+        fourteen_days_ago = (datetime.utcnow() - timedelta(days=14)).isoformat()
+        response = supabase.table("sync_logs").select("sync_time").eq("user_id", user_id).gte("sync_time", fourteen_days_ago).execute()
+        
+        # Initialize an empty map for the last 14 days
+        date_map = {}
+        for i in range(13, -1, -1):
+            d = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
+            date_map[d] = 0
+            
+        # Group fetched logs
+        for log in response.data:
+            day = log.get("sync_time", "").split("T")[0]
+            if day in date_map:
+                date_map[day] += 1
+                
+        # Convert to chart array
+        trend = [{"date": k, "leads": v} for k, v in date_map.items()]
+        
+        return {"success": True, "data": trend}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.get("/api/analytics/distribution")
+async def get_analytics_distribution(user_id: str):
+    """Aggregates leads by domain (Business vs External vs Personal)."""
+    from api.database import supabase
+    
+    if not supabase:
+        return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
+    if not user_id:
+        return JSONResponse(status_code=400, content={"error": "user_id is required"})
+        
+    try:
+        # Fetch all logs (or limit to recently)
+        response = supabase.table("sync_logs").select("lead_email").eq("user_id", user_id).execute()
+        
+        counts = {"Business/B2B": 0, "Personal": 0}
+        personal_domains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"]
+        
+        for log in response.data:
+            email = log.get("lead_email", "")
+            if "@" in email:
+                domain = email.split("@")[-1].lower()
+                if domain in personal_domains:
+                    counts["Personal"] += 1
+                else:
+                    counts["Business/B2B"] += 1
+                    
+        # Filter out 0 counts
+        distribution = [{"name": k, "value": v} for k, v in counts.items() if v > 0]
+        
+        if not distribution:
+             distribution = [{"name": "No Data", "value": 1}] # Fallback for empty pie chart
+             
+        return {"success": True, "data": distribution}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
