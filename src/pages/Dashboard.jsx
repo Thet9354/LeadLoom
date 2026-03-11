@@ -3,7 +3,7 @@ import { Database, AlertTriangle, CheckCircle, Mail, Circle, X, Save, AlertCircl
 import { useLocation, Link } from "react-router-dom";
 import Breadcrumb from "../components/Breadcrumb";
 import { API_URL } from '../config';
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#64748b'];
 
