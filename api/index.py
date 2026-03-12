@@ -324,7 +324,7 @@ async def get_sync_logs(user_id: str):
         return JSONResponse(status_code=400, content={"error": "user_id is required"})
         
     try:
-        response = supabase.table("sync_logs").select("*").eq("user_id", user_id).order("sync_time", desc=True).limit(5).execute()
+        response = supabase.table("sync_logs").select("*").eq("user_id", user_id).order("sync_time", desc=True).limit(20).execute()
         return {"success": True, "data": response.data}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
@@ -334,7 +334,7 @@ async def get_sync_logs(user_id: str):
 async def get_dashboard_stats(user_id: str):
     """Fetches real-time stats and system health for the Dashboard Command Center."""
     from api.database import supabase, get_user_config
-    from api.notion_service import get_notion_analytics
+    from datetime import datetime, timedelta
     
     if not supabase:
         return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
@@ -347,21 +347,58 @@ async def get_dashboard_stats(user_id: str):
         count_resp = supabase.table("sync_logs").select("id", count="exact").eq("user_id", user_id).execute()
         total_leads = count_resp.count if count_resp.count is not None else 0
         
+        # Get leads this week
+        week_ago = (datetime.utcnow() - timedelta(days=7)).isoformat()
+        week_resp = supabase.table("sync_logs").select("id", count="exact").eq("user_id", user_id).gte("sync_time", week_ago).execute()
+        leads_this_week = week_resp.count if week_resp.count is not None else 0
+        
         # Determine Integration Health
         user_config = get_user_config(user_id)
         gmail_connected = False
         notion_linked = False
-        notion_analytics = None
+        high_intent_pct = None
         
         if "error" not in user_config:
             gmail_connected = bool(user_config.get("gmail_refresh_token"))
             notion_linked = bool(user_config.get("notion_db_id"))
             
+            # Attempt to calculate high intent % from Notion Priority tags
+            notion_api_key = user_config.get("notion_api_key")
+            notion_db_id = user_config.get("notion_db_id")
+            if notion_linked and notion_api_key and notion_db_id:
+                try:
+                    import requests as req
+                    from api.database import decrypt_value
+                    decrypted_key = decrypt_value(notion_api_key)
+                    headers = {
+                        "Authorization": f"Bearer {decrypted_key}",
+                        "Notion-Version": "2022-06-28",
+                        "Content-Type": "application/json"
+                    }
+                    body = {"page_size": 100}
+                    r = req.post(f"https://api.notion.com/v1/databases/{notion_db_id}/query", headers=headers, json=body)
+                    if r.status_code == 200:
+                        results = r.json().get("results", [])
+                        high_count = 0
+                        total_with_priority = 0
+                        for page in results:
+                            props = page.get("properties", {})
+                            priority = props.get("Priority", {})
+                            if priority.get("type") == "select" and priority.get("select"):
+                                total_with_priority += 1
+                                if priority["select"].get("name", "").lower() == "high":
+                                    high_count += 1
+                        if total_with_priority > 0:
+                            high_intent_pct = round((high_count / total_with_priority) * 100)
+                except Exception:
+                    pass  # Silently fail — Notion is optional
+            
         return {
             "success": True, 
             "data": {
                 "total_leads": total_leads,
-                "sync_health": "99.2%", # Mocking high tier health as per UI spec req
+                "leads_this_week": leads_this_week,
+                "high_intent_pct": high_intent_pct,
                 "system_health": {
                     "gmail_connected": gmail_connected,
                     "notion_linked": notion_linked
@@ -373,8 +410,8 @@ async def get_dashboard_stats(user_id: str):
 
 
 @app.get("/api/analytics/volume")
-async def get_analytics_volume(user_id: str):
-    """Fetches the lead sync volume over the last 14 days, grouped by date."""
+async def get_analytics_volume(user_id: str, days: int = 14):
+    """Fetches the lead sync volume grouped by date. Supports 7, 30, 90 day ranges."""
     from api.database import supabase
     from datetime import datetime, timedelta
     
@@ -382,25 +419,26 @@ async def get_analytics_volume(user_id: str):
         return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
     if not user_id:
         return JSONResponse(status_code=400, content={"error": "user_id is required"})
+    
+    # Clamp to valid range values
+    if days not in (7, 30, 90):
+        days = 14
         
     try:
-        # Fetch the last 14 days of logs
-        fourteen_days_ago = (datetime.utcnow() - timedelta(days=14)).isoformat()
-        response = supabase.table("sync_logs").select("sync_time").eq("user_id", user_id).gte("sync_time", fourteen_days_ago).execute()
+        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        response = supabase.table("sync_logs").select("sync_time").eq("user_id", user_id).gte("sync_time", cutoff).execute()
         
-        # Initialize an empty map for the last 14 days
+        # Initialize an empty map for the range
         date_map = {}
-        for i in range(13, -1, -1):
+        for i in range(days - 1, -1, -1):
             d = (datetime.utcnow() - timedelta(days=i)).strftime("%Y-%m-%d")
             date_map[d] = 0
             
-        # Group fetched logs
         for log in response.data:
             day = log.get("sync_time", "").split("T")[0]
             if day in date_map:
                 date_map[day] += 1
                 
-        # Convert to chart array
         trend = [{"date": k, "leads": v} for k, v in date_map.items()]
         
         return {"success": True, "data": trend}
@@ -409,18 +447,22 @@ async def get_analytics_volume(user_id: str):
 
 
 @app.get("/api/analytics/distribution")
-async def get_analytics_distribution(user_id: str):
-    """Aggregates leads by domain (Business vs External vs Personal)."""
+async def get_analytics_distribution(user_id: str, days: int = 14):
+    """Aggregates leads by domain (Business vs Personal). Supports time-range filtering."""
     from api.database import supabase
+    from datetime import datetime, timedelta
     
     if not supabase:
         return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
     if not user_id:
         return JSONResponse(status_code=400, content={"error": "user_id is required"})
+    
+    if days not in (7, 30, 90):
+        days = 14
         
     try:
-        # Fetch all logs (or limit to recently)
-        response = supabase.table("sync_logs").select("lead_email").eq("user_id", user_id).execute()
+        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+        response = supabase.table("sync_logs").select("lead_email").eq("user_id", user_id).gte("sync_time", cutoff).execute()
         
         counts = {"Business/B2B": 0, "Personal": 0}
         personal_domains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com", "aol.com"]
@@ -434,11 +476,10 @@ async def get_analytics_distribution(user_id: str):
                 else:
                     counts["Business/B2B"] += 1
                     
-        # Filter out 0 counts
         distribution = [{"name": k, "value": v} for k, v in counts.items() if v > 0]
         
         if not distribution:
-             distribution = [{"name": "No Data", "value": 1}] # Fallback for empty pie chart
+             distribution = [{"name": "No Data", "value": 1}]
              
         return {"success": True, "data": distribution}
     except Exception as e:

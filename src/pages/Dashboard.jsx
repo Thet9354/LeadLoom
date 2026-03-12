@@ -1,626 +1,543 @@
 import { useState, useEffect } from "react";
-import { Database, AlertTriangle, CheckCircle, Mail, Circle, X, Save, AlertCircle, Zap, Crown, CreditCard, Lock } from "lucide-react";
+import { Database, AlertTriangle, CheckCircle, Mail, X, Save, AlertCircle, Zap, Crown, CreditCard, Lock, TrendingUp, Shield, Copy, ExternalLink, ChevronRight } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import { API_URL } from '../config';
-import { ResponsiveContainer, LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#64748b'];
+const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#64748b'];
+const PERSONAL_DOMAINS = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'icloud.com', 'aol.com'];
 
-const AnimatedNumber = ({ value }) => {
+const AnimatedNumber = ({ value, prefix = "", suffix = "" }) => {
     const [displayValue, setDisplayValue] = useState(0);
-
     useEffect(() => {
         const end = parseInt(value, 10);
         if (isNaN(end)) return;
-        if (end === 0) {
-            setDisplayValue(0);
-            return;
-        }
-
+        if (end === 0) { setDisplayValue(0); return; }
         let start = 0;
-        const duration = 1200; // ms
-        const increment = end / (duration / 16); // 60fps
-
+        const duration = 1200;
+        const increment = end / (duration / 16);
         const timer = setInterval(() => {
             start += increment;
-            if (start >= end) {
-                setDisplayValue(end);
-                clearInterval(timer);
-            } else {
-                setDisplayValue(Math.floor(start));
-            }
+            if (start >= end) { setDisplayValue(end); clearInterval(timer); }
+            else { setDisplayValue(Math.floor(start)); }
         }, 16);
-
         return () => clearInterval(timer);
     }, [value]);
-
-    return <span>{displayValue}</span>;
+    return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
 };
 
+// Intent classification from email domain
+const getIntent = (email) => {
+    if (!email || !email.includes("@")) return "Medium";
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (PERSONAL_DOMAINS.includes(domain)) return "Medium";
+    return "High";
+};
+
+const IntentPill = ({ intent }) => {
+    const styles = {
+        High: "bg-green-900/30 text-green-400 border-green-800/50",
+        Medium: "bg-blue-900/30 text-blue-400 border-blue-800/50",
+        Spam: "bg-red-900/30 text-red-400 border-red-800/50"
+    };
+    return (
+        <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${styles[intent] || styles.Medium}`}>
+            {intent}
+        </span>
+    );
+};
 
 const PLAN_LIMITS = { starter: 30, plus: 100, pro: Infinity };
+const CARD = "bg-[#111111]/80 backdrop-blur-md border border-[#222222] rounded-xl";
 
 export default function Dashboard({ session }) {
     const [syncLogs, setSyncLogs] = useState(() => {
-        try {
-            const cached = localStorage.getItem(`ll_logs_${session?.user?.id || 'guest'}`);
-            return cached ? JSON.parse(cached) : [];
-        } catch (e) { return []; }
+        try { const c = localStorage.getItem(`ll_logs_${session?.user?.id || 'guest'}`); return c ? JSON.parse(c) : []; } catch { return []; }
     });
     const [userProfile, setUserProfile] = useState(() => {
-        try {
-            const cached = localStorage.getItem(`ll_profile_${session?.user?.id || 'guest'}`);
-            return cached ? JSON.parse(cached) : null;
-        } catch (e) { return null; }
+        try { const c = localStorage.getItem(`ll_profile_${session?.user?.id || 'guest'}`); return c ? JSON.parse(c) : null; } catch { return null; }
     });
     const [dashboardStats, setDashboardStats] = useState(() => {
-        try {
-            const cached = localStorage.getItem(`ll_stats_${session?.user?.id || 'guest'}`);
-            return cached ? JSON.parse(cached) : null;
-        } catch (e) { return null; }
+        try { const c = localStorage.getItem(`ll_stats_${session?.user?.id || 'guest'}`); return c ? JSON.parse(c) : null; } catch { return null; }
     });
     const [volumeData, setVolumeData] = useState(() => {
-        try {
-            const cached = localStorage.getItem(`ll_volume_${session?.user?.id || 'guest'}`);
-            return cached ? JSON.parse(cached) : null;
-        } catch (e) { return null; }
+        try { const c = localStorage.getItem(`ll_volume_${session?.user?.id || 'guest'}`); return c ? JSON.parse(c) : null; } catch { return null; }
     });
     const [distributionData, setDistributionData] = useState(() => {
-        try {
-            const cached = localStorage.getItem(`ll_dist_${session?.user?.id || 'guest'}`);
-            return cached ? JSON.parse(cached) : null;
-        } catch (e) { return null; }
+        try { const c = localStorage.getItem(`ll_dist_${session?.user?.id || 'guest'}`); return c ? JSON.parse(c) : null; } catch { return null; }
     });
 
-    // Onboarding state — derived from profile, not manually tracked
     const [showConfigModal, setShowConfigModal] = useState(false);
     const [notionDbId, setNotionDbId] = useState("");
     const [notionApiKey, setNotionApiKey] = useState("");
     const [isSaving, setIsSaving] = useState(false);
     const [toast, setToast] = useState(null);
+    const [timeRange, setTimeRange] = useState(7);
+    const [selectedLead, setSelectedLead] = useState(null);
+    const [copied, setCopied] = useState(false);
 
     const location = useLocation();
 
-    // Derive setup status from profile data (single source of truth)
     const gmailConnected = !!userProfile?.gmail_connected;
     const notionConfigured = !!userProfile?.notion_configured;
-
-    // Plan helpers
     const planType = userProfile?.plan_type || "starter";
     const planLimit = PLAN_LIMITS[planType] || 30;
     const syncCount = userProfile?.current_month_sync_count || 0;
     const limitReached = planType !== "pro" && syncCount >= planLimit;
-
-    // Card activation (must come after planType)
     const cardActivated = planType !== "starter";
     const setupComplete = gmailConnected && notionConfigured && cardActivated;
 
-    // Calculate Trial Days (only for Pro trial users)
     let daysRemaining = 14;
     let trialExpired = false;
-    if (userProfile && planType === "pro" && userProfile.trial_start_date) {
-        const start = new Date(userProfile.trial_start_date);
-        const current = new Date();
-        const diffDays = Math.floor((current - start) / (1000 * 60 * 60 * 24));
-        daysRemaining = Math.max(0, 14 - diffDays);
+    if (planType === "pro" && userProfile?.trial_start) {
+        const diff = Math.floor((Date.now() - new Date(userProfile.trial_start).getTime()) / 86400000);
+        daysRemaining = Math.max(0, 14 - diff);
         trialExpired = daysRemaining <= 0;
     }
 
-    // Handle URL params (OAuth errors, checkout status)
+    // URL param effects
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const error = params.get("error");
-        if (error) {
-            showToastMsg("error", "Gmail connection issue: " + decodeURIComponent(error));
-            window.history.replaceState({}, "", "/dashboard");
-        }
+        if (error) { showToastMsg("error", "Gmail connection issue: " + decodeURIComponent(error)); window.history.replaceState({}, "", "/dashboard"); }
         const checkout = params.get("checkout");
-        if (checkout === "success") {
-            showToastMsg("success", "Payment successful! Your plan will activate shortly.");
-            window.history.replaceState({}, "", "/dashboard");
-        }
-        if (checkout === "canceled") {
-            showToastMsg("error", "Checkout was canceled.");
-            window.history.replaceState({}, "", "/dashboard");
-        }
-        // If OAuth redirected with success, show a brief toast
-        if (params.get("step") === "1" && params.get("success") === "true") {
-            showToastMsg("success", "Gmail connected successfully!");
-            window.history.replaceState({}, "", "/dashboard");
-        }
-        // Pro trial activation redirect
-        if (params.get("activate") === "pro") {
-            showToastMsg("success", "Almost there! Complete setup below, then activate your card to start your 14-day free trial.");
-            window.history.replaceState({}, "", "/dashboard");
-        }
+        if (checkout === "success") { showToastMsg("success", "Payment successful!"); window.history.replaceState({}, "", "/dashboard"); }
+        if (checkout === "canceled") { showToastMsg("error", "Checkout was canceled."); window.history.replaceState({}, "", "/dashboard"); }
+        if (params.get("step") === "1" && params.get("success") === "true") { showToastMsg("success", "Gmail connected!"); window.history.replaceState({}, "", "/dashboard"); }
+        if (params.get("activate") === "pro") { showToastMsg("success", "Complete setup below to start your 14-day trial."); window.history.replaceState({}, "", "/dashboard"); }
     }, [location.search]);
 
-    const showToastMsg = (type, message) => {
-        setToast({ type, message });
-        setTimeout(() => setToast(null), 5000);
-    };
+    const showToastMsg = (type, message) => { setToast({ type, message }); setTimeout(() => setToast(null), 5000); };
 
-    // Fetch Sync Logs and Profile
+    // Data fetching
     useEffect(() => {
         if (!session?.user?.id) return;
         const fetchData = async () => {
             try {
                 const logRes = await fetch(`${API_URL}/api/user/sync-logs?user_id=${session.user.id}`);
                 const logData = await logRes.json();
-                if (logData?.success && Array.isArray(logData?.data)) {
-                    setSyncLogs(logData.data);
-                    localStorage.setItem(`ll_logs_${session.user.id}`, JSON.stringify(logData.data));
-                } else setSyncLogs([]);
-            } catch (err) {
-                console.error("Failed to fetch sync logs:", err);
-            }
+                if (logData?.success && Array.isArray(logData?.data)) { setSyncLogs(logData.data); localStorage.setItem(`ll_logs_${session.user.id}`, JSON.stringify(logData.data)); }
+                else setSyncLogs([]);
+            } catch (err) { console.error("Sync logs fetch failed:", err); }
 
             try {
                 const profRes = await fetch(`${API_URL}/api/user/profile?user_id=${session.user.id}`);
                 const profData = await profRes.json();
-                if (profData?.success) {
-                    setUserProfile(profData.data);
-                    localStorage.setItem(`ll_profile_${session.user.id}`, JSON.stringify(profData.data));
-                }
-            } catch (err) {
-                console.error("Failed to fetch profile:", err);
-            }
+                if (profData?.success) { setUserProfile(profData.data); localStorage.setItem(`ll_profile_${session.user.id}`, JSON.stringify(profData.data)); }
+            } catch (err) { console.error("Profile fetch failed:", err); }
 
             try {
                 const statsRes = await fetch(`${API_URL}/api/dashboard-stats?user_id=${session.user.id}`);
                 const statsData = await statsRes.json();
-                if (statsData?.success) {
-                    setDashboardStats(statsData.data);
-                    localStorage.setItem(`ll_stats_${session.user.id}`, JSON.stringify(statsData.data));
-                }
-            } catch (err) {
-                console.error("Failed to fetch stats:", err);
-            }
-
-            try {
-                const volRes = await fetch(`${API_URL}/api/analytics/volume?user_id=${session.user.id}`);
-                const volData = await volRes.json();
-                if (volData?.success) {
-                    setVolumeData(volData.data);
-                    localStorage.setItem(`ll_volume_${session.user.id}`, JSON.stringify(volData.data));
-                }
-            } catch (err) {
-                console.error("Failed to fetch volume data:", err);
-            }
-
-            try {
-                const distRes = await fetch(`${API_URL}/api/analytics/distribution?user_id=${session.user.id}`);
-                const distData = await distRes.json();
-                if (distData?.success) {
-                    setDistributionData(distData.data);
-                    localStorage.setItem(`ll_dist_${session.user.id}`, JSON.stringify(distData.data));
-                }
-            } catch (err) {
-                console.error("Failed to fetch distribution data:", err);
-            }
+                if (statsData?.success) { setDashboardStats(statsData.data); localStorage.setItem(`ll_stats_${session.user.id}`, JSON.stringify(statsData.data)); }
+            } catch (err) { console.error("Stats fetch failed:", err); }
         };
         fetchData();
-        const interval = setInterval(fetchData, 10000);
+        const interval = setInterval(fetchData, 15000);
         return () => clearInterval(interval);
     }, [session?.user?.id]);
 
-    const handleGoogleConnect = () => {
+    // Chart data — re-fetch when time range changes
+    useEffect(() => {
         if (!session?.user?.id) return;
-        window.location.href = `${API_URL}/auth/google?user_id=${session.user.id}`;
-    };
+        const fetchCharts = async () => {
+            try {
+                const volRes = await fetch(`${API_URL}/api/analytics/volume?user_id=${session.user.id}&days=${timeRange}`);
+                const volData = await volRes.json();
+                if (volData?.success) { setVolumeData(volData.data); localStorage.setItem(`ll_volume_${session.user.id}`, JSON.stringify(volData.data)); }
+            } catch (err) { console.error("Volume fetch failed:", err); }
+            try {
+                const distRes = await fetch(`${API_URL}/api/analytics/distribution?user_id=${session.user.id}&days=${timeRange}`);
+                const distData = await distRes.json();
+                if (distData?.success) { setDistributionData(distData.data); localStorage.setItem(`ll_dist_${session.user.id}`, JSON.stringify(distData.data)); }
+            } catch (err) { console.error("Distribution fetch failed:", err); }
+        };
+        fetchCharts();
+    }, [session?.user?.id, timeRange]);
+
+    const handleGoogleConnect = () => { if (!session?.user?.id) return; window.location.href = `${API_URL}/auth/google?user_id=${session.user.id}`; };
 
     const handleSaveNotionConfig = async () => {
-        if (!notionDbId) {
-            showToastMsg("error", "Please enter a Notion Database ID.");
-            return;
-        }
+        if (!notionDbId) { showToastMsg("error", "Please enter a Notion Database ID."); return; }
         setIsSaving(true);
         try {
-            const response = await fetch(`${API_URL}/api/user/notion-config`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    user_id: session.user.id,
-                    notion_db_id: notionDbId,
-                    notion_api_key: notionApiKey || undefined
-                }),
-            });
+            const response = await fetch(`${API_URL}/api/user/notion-config`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_id: session.user.id, notion_db_id: notionDbId, notion_api_key: notionApiKey || undefined }) });
             const data = await response.json();
-            if (data.success) {
-                setShowConfigModal(false);
-                showToastMsg("success", "Notion database connected!");
-                // Re-fetch profile to update state
-                const profRes = await fetch(`${API_URL}/api/user/profile?user_id=${session.user.id}`);
-                const profData = await profRes.json();
-                if (profData?.success) setUserProfile(profData.data);
-            } else {
-                showToastMsg("error", "Failed to save: " + (data.error || "Unknown error"));
-            }
-        } catch (error) {
-            showToastMsg("error", "Network error: " + error.message);
-        } finally {
-            setIsSaving(false);
-        }
+            if (data.success) { setShowConfigModal(false); showToastMsg("success", "Notion database connected!"); const profRes = await fetch(`${API_URL}/api/user/profile?user_id=${session.user.id}`); const profData = await profRes.json(); if (profData?.success) setUserProfile(profData.data); }
+            else { showToastMsg("error", "Failed to save: " + (data.error || "Unknown error")); }
+        } catch (error) { showToastMsg("error", "Network error: " + error.message); }
+        finally { setIsSaving(false); }
     };
 
     const handleUpgrade = async (plan = "pro") => {
         if (!session?.user?.id) return;
         try {
-            const response = await fetch(`${API_URL}/create-checkout-session`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: session.user.id, plan })
-            });
+            const response = await fetch(`${API_URL}/create-checkout-session`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ user_id: session.user.id, plan }) });
             const data = await response.json();
             if (data.url) window.location.href = data.url;
-        } catch (error) {
-            console.error("Checkout Error:", error);
-        }
+        } catch (error) { console.error("Checkout Error:", error); }
     };
 
+    const handleCopyEmail = (email) => { navigator.clipboard.writeText(email); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+
+    const totalLeads = dashboardStats?.total_leads || 0;
+    const leadsThisWeek = dashboardStats?.leads_this_week || 0;
+    const highIntentPct = dashboardStats?.high_intent_pct;
+
     return (
-        <main className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-24 pb-12 transition-colors">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <main className="min-h-screen bg-[#030303] pt-24 pb-12 transition-colors">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                 <Breadcrumb items={[{ label: "Dashboard" }]} />
 
-                {/* Toast Notification */}
+                {/* Toast */}
                 {toast && (
-                    <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 text-sm font-medium shadow-sm ${toast.type === "success"
-                        ? "bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800"
-                        : "bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800"
-                        }`}>
+                    <div className={`mb-6 p-4 rounded-xl flex items-center gap-3 text-sm font-medium shadow-sm ${toast.type === "success" ? "bg-green-900/30 text-green-300 border border-green-800" : "bg-red-900/30 text-red-300 border border-red-800"}`}>
                         {toast.type === "success" ? <CheckCircle size={18} /> : <AlertCircle size={18} />}
                         <span className="flex-1">{toast.message}</span>
-                        <button onClick={() => setToast(null)} className="text-current opacity-50 hover:opacity-100">
-                            <X size={16} />
-                        </button>
+                        <button onClick={() => setToast(null)} className="text-current opacity-50 hover:opacity-100"><X size={16} /></button>
                     </div>
                 )}
 
-                {/* Sync Limit Reached Banner */}
+                {/* Sync Limit Banner */}
                 {limitReached && (
-                    <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800 p-6 mb-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-sm gap-4">
+                    <div className={`${CARD} p-6 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4`}>
                         <div className="flex items-start gap-3">
-                            <AlertTriangle size={24} className="text-red-500 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">Sync Limit Reached</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    You've used {syncCount}/{planLimit} lead syncs this month on the {planType === "plus" ? "Plus" : "Starter"} plan. Upgrade to continue syncing.
-                                </p>
-                            </div>
+                            <AlertTriangle size={24} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                            <div><p className="font-semibold text-white">Monthly limit reached</p><p className="text-sm text-gray-400">Upgrade to continue syncing leads.</p></div>
                         </div>
-                        <button onClick={() => handleUpgrade(planType === "starter" ? "plus" : "pro")} className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition-all hover:-translate-y-0.5 whitespace-nowrap">
-                            Upgrade Now
-                        </button>
+                        <button onClick={() => handleUpgrade("pro")} className="bg-[#2563eb] hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 whitespace-nowrap text-sm">Upgrade to Pro</button>
                     </div>
                 )}
 
-                {/* Trial Banner (only for Pro trial) */}
+                {/* Trial Expired Banner */}
                 {trialExpired && planType === "pro" && (
-                    <div className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border border-red-200 dark:border-red-800 p-6 mb-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-sm gap-4">
+                    <div className={`${CARD} p-6 mb-6 flex flex-col sm:flex-row items-center justify-between gap-4`}>
                         <div className="flex items-start gap-3">
-                            <AlertTriangle size={24} className="text-red-500 flex-shrink-0 mt-0.5" />
-                            <div>
-                                <h4 className="font-bold text-gray-900 dark:text-white text-lg mb-1">Trial Expired</h4>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">Your Pro trial has ended. Subscribe to continue syncing.</p>
-                            </div>
+                            <CreditCard size={24} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                            <div><p className="font-semibold text-white">Pro trial expired</p><p className="text-sm text-gray-400">Subscribe to keep your pro features active.</p></div>
                         </div>
-                        <button onClick={() => handleUpgrade("pro")} className="bg-red-500 hover:bg-red-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md transition-all hover:-translate-y-0.5 whitespace-nowrap">
-                            Subscribe to Pro
-                        </button>
+                        <button onClick={() => handleUpgrade("pro")} className="bg-[#2563eb] hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 whitespace-nowrap text-sm">Subscribe</button>
                     </div>
                 )}
 
-                {/* Active Plan Banner */}
+                {/* Plan Banner */}
                 {!limitReached && !trialExpired && userProfile && (
-                    <div className={`p-5 mb-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between shadow-sm gap-4 ${planType === "pro"
-                        ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800"
-                        : planType === "plus"
-                            ? "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800"
-                            : "bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 border border-orange-200 dark:border-orange-800"
-                        }`}>
+                    <div className={`${CARD} p-5 mb-6 flex items-center justify-between`}>
                         <div>
-                            <h4 className="flex items-center gap-2 font-bold text-gray-900 dark:text-white text-lg mb-1">
+                            <h4 className="flex items-center gap-2 font-bold text-white text-lg mb-0.5">
                                 {planType === "pro" && <Crown size={18} className="text-emerald-500" />}
                                 {planType === "plus" && <Zap size={18} className="text-blue-500" />}
-                                {planType === "pro" ? "LeadLoom Pro" : planType === "plus" ? "LeadLoom Plus" : "Starter Plan"}
+                                {planType === "pro" ? "LeadLooms Pro" : planType === "plus" ? "LeadLooms Plus" : "Starter Plan"}
                                 {planType !== "pro" && (
-                                    <span className={`text-sm font-semibold px-2 py-0.5 rounded ${planType === "plus"
-                                        ? "text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/50"
-                                        : "text-orange-600 dark:text-orange-400 bg-orange-100 dark:bg-orange-900/50"
-                                        }`}>
-                                        {syncCount}/{planLimit} syncs
-                                    </span>
+                                    <span className="text-sm font-semibold px-2 py-0.5 rounded bg-[#2563eb]/20 text-blue-400">{syncCount}/{planLimit} syncs</span>
                                 )}
                             </h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {planType === "pro"
-                                    ? "Unlimited syncs, AI hooks — all features unlocked."
-                                    : planType === "plus"
-                                        ? "Upgrade to Pro for unlimited syncs and AI hooks."
-                                        : "Upgrade for more lead syncs and premium features."}
-                            </p>
+                            <p className="text-sm text-gray-400">{planType === "pro" ? "Unlimited syncs — all features unlocked." : "Upgrade for more lead syncs and premium features."}</p>
                         </div>
                         {planType !== "pro" && (
-                            <button onClick={() => handleUpgrade("pro")} className="bg-primary hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 whitespace-nowrap text-sm">
-                                Upgrade to Pro
-                            </button>
+                            <button onClick={() => handleUpgrade("pro")} className="bg-[#2563eb] hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 whitespace-nowrap text-sm">Upgrade to Pro</button>
                         )}
                     </div>
                 )}
 
-                {/* ============ COMMAND CENTER GRID ============ */}
+                {/* ============ COMMAND CENTER ============ */}
                 <div className="flex flex-col gap-6">
-                    {/* Top Stats Row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {/* Total Leads */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-blue-500/50 hover:shadow-blue-500/10 transition-all duration-300 group overflow-hidden relative">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-xl group-hover:bg-blue-500/20 transition-all"></div>
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Leads Synced</h3>
-                            <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                                <AnimatedNumber value={dashboardStats?.total_leads || 0} />
+
+                    {/* ===== TASK 2: ROI HERO STATS ===== */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {/* Revenue Protected */}
+                        <div className={`${CARD} p-5 flex flex-col justify-between h-[120px] group`}>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue Protected</span>
+                            <p className="text-3xl font-black text-[#10b981] tracking-tight" style={{ textShadow: '0 0 20px rgba(16, 185, 129, 0.3)' }}>
+                                <AnimatedNumber value={totalLeads * 500} prefix="$" />
                             </p>
                         </div>
 
-                        {/* Sync Health */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-green-500/50 hover:shadow-green-500/10 transition-all duration-300 group overflow-hidden relative">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-green-500/10 rounded-full blur-xl group-hover:bg-green-500/20 transition-all"></div>
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">System Health</h3>
-                            <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-emerald-400 tracking-tight">
-                                {dashboardStats?.sync_health || "99.2%"}
+                        {/* AI Intent Score */}
+                        <div className={`${CARD} p-5 flex flex-col justify-between h-[120px] group`}>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">AI Intent Score</span>
+                            <p className="text-3xl font-black text-white tracking-tight">
+                                {highIntentPct !== null && highIntentPct !== undefined ? (
+                                    <><AnimatedNumber value={highIntentPct} suffix="%" /> <span className="text-sm font-semibold text-gray-400">High Intent</span></>
+                                ) : (
+                                    <span className="text-gray-500">—</span>
+                                )}
                             </p>
                         </div>
 
-                        {/* Plan Limit */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-orange-500/50 hover:shadow-orange-500/10 transition-all duration-300 group overflow-hidden relative">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/10 rounded-full blur-xl group-hover:bg-orange-500/20 transition-all"></div>
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Monthly Usage</h3>
-                            <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                                <AnimatedNumber value={syncCount} />
-                                <span className="text-2xl text-gray-400 font-medium">/{planType === "pro" ? "∞" : planLimit}</span>
-                            </p>
+                        {/* Lead Momentum */}
+                        <div className={`${CARD} p-5 flex flex-col justify-between h-[120px] group`}>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">This Week</span>
+                            <div className="flex items-center gap-2">
+                                <p className="text-3xl font-black text-white tracking-tight">
+                                    <AnimatedNumber value={leadsThisWeek} />
+                                </p>
+                                <TrendingUp size={20} className="text-[#10b981]" />
+                            </div>
                         </div>
 
-                        {/* Trial Status */}
-                        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-xl flex flex-col justify-between h-32 hover:border-purple-500/50 hover:shadow-purple-500/10 transition-all duration-300 group overflow-hidden relative">
-                            <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-xl group-hover:bg-purple-500/20 transition-all"></div>
-                            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">Account Status</h3>
-                            <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tight">
-                                {planType === "pro" && !trialExpired ? `${daysRemaining}D` : planType === "pro" ? "Expired" : "Active"}
-                            </p>
+                        {/* System Pulse */}
+                        <div className={`${CARD} p-5 flex flex-col justify-between h-[120px] group`}>
+                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">System Pulse</span>
+                            <div className="flex items-center gap-2.5">
+                                <span className="relative flex h-3 w-3">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-3 w-3 bg-[#10b981]"></span>
+                                </span>
+                                <span className="text-lg font-bold text-white">Active & Secure</span>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Analytics Charts Row */}
-                    {(volumeData || distributionData) && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Trend Area Chart (Spans 2 columns) */}
-                            <div className="lg:col-span-2 bg-[#111111] border border-gray-800 rounded-xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-700 transition-colors">
-                                <div className="mb-4">
-                                    <h3 className="text-sm font-semibold text-white">Lead Momentum</h3>
-                                    <p className="text-xs text-gray-400">Synced inbound activity over the last 14 days.</p>
-                                </div>
-                                <div className="flex-1 w-full h-full min-h-0">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <AreaChart data={volumeData || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                            <defs>
-                                                <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                                                </linearGradient>
-                                            </defs>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#333" vertical={false} opacity={0.2} />
-                                            <XAxis dataKey="date" stroke="#888" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(val) => {
-                                                const d = new Date(val);
-                                                return `${d.getMonth() + 1}/${d.getDate()}`;
-                                            }} minTickGap={20} />
-                                            <YAxis stroke="#888" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                            <Tooltip contentStyle={{ backgroundColor: '#111111', borderColor: '#333', borderRadius: '12px', color: '#fff' }} cursor={{ stroke: '#4b5563', strokeWidth: 1, strokeDasharray: '4 4' }} itemStyle={{ color: '#fff', fontWeight: 600 }} />
-                                            <Area type="monotone" dataKey="leads" name="New Leads" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" animationDuration={1500} />
-                                        </AreaChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </div>
+                    {/* ===== TASK 3: ANALYTICS ENGINE ===== */}
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-sm font-semibold text-white">Analytics</h2>
+                        <div className="flex items-center bg-[#111111] border border-[#222222] rounded-lg p-0.5">
+                            {[7, 30, 90].map(d => (
+                                <button key={d} onClick={() => setTimeRange(d)} className={`text-xs font-semibold px-3 py-1.5 rounded-md transition-all ${timeRange === d ? 'bg-[#2563eb] text-white shadow-md' : 'text-gray-400 hover:text-white'}`}>
+                                    {d}D
+                                </button>
+                            ))}
+                        </div>
+                    </div>
 
-                            {/* Intent / Distribution (Pie) */}
-                            <div className="lg:col-span-1 bg-[#111111] border border-gray-800 rounded-xl p-6 shadow-xl flex flex-col h-[380px] hover:border-gray-700 transition-colors relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -z-10"></div>
-                                <div>
-                                    <h3 className="text-sm font-semibold text-white flex items-center justify-between">
-                                        Source Distribution
-                                    </h3>
-                                    <p className="text-xs text-gray-400">Business vs Personal inbound ratios.</p>
-                                </div>
-                                <div className="flex-1 w-full h-full min-h-0 flex items-center justify-center relative mt-2">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={distributionData || []}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={65}
-                                                outerRadius={90}
-                                                paddingAngle={4}
-                                                dataKey="value"
-                                                stroke="none"
-                                                animationDuration={1500}
-                                                cornerRadius={4}
-                                            >
-                                                {(distributionData || []).map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip contentStyle={{ backgroundColor: '#111111', borderColor: '#333', borderRadius: '12px', color: '#fff' }} itemStyle={{ color: '#fff', fontWeight: 600 }} />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                                {/* Custom Legend */}
-                                <div className="flex flex-wrap gap-3 mt-2 justify-center pb-2">
-                                    {(distributionData || []).map((entry, index) => (
-                                        <div key={index} className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
-                                            <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
-                                            <span className="truncate max-w-[100px]">{entry.name} ({entry.value})</span>
-                                        </div>
-                                    ))}
-                                </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Area Chart */}
+                        <div className={`lg:col-span-2 ${CARD} p-5 flex flex-col h-[340px]`}>
+                            <div className="mb-3">
+                                <h3 className="text-sm font-semibold text-white">Lead Momentum</h3>
+                                <p className="text-xs text-gray-500">Synced inbound activity over the last {timeRange} days.</p>
+                            </div>
+                            <div className="flex-1 w-full min-h-0">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={volumeData || []} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4} />
+                                                <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} opacity={0.3} />
+                                        <XAxis dataKey="date" stroke="#555" tick={{ fontSize: 11, fill: '#555' }} tickLine={false} axisLine={false} tickFormatter={(v) => { const d = new Date(v); return `${d.getMonth() + 1}/${d.getDate()}`; }} minTickGap={25} />
+                                        <YAxis stroke="#555" tick={{ fontSize: 11, fill: '#555' }} tickLine={false} axisLine={false} allowDecimals={false} />
+                                        <Tooltip contentStyle={{ backgroundColor: '#111111', borderColor: '#333', borderRadius: '10px', color: '#fff', fontSize: '13px' }} itemStyle={{ color: '#fff', fontWeight: 600 }} cursor={{ stroke: '#333', strokeDasharray: '4 4' }} />
+                                        <Area type="monotone" dataKey="leads" name="Leads" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#colorLeads)" activeDot={{ r: 6, strokeWidth: 0, fill: '#2563eb' }} animationDuration={1200} />
+                                    </AreaChart>
+                                </ResponsiveContainer>
                             </div>
                         </div>
-                    )}
 
-                    {/* Bottom Row */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Donut Chart */}
+                        <div className={`${CARD} p-5 flex flex-col h-[340px] relative overflow-hidden`}>
+                            <div>
+                                <h3 className="text-sm font-semibold text-white">Source Distribution</h3>
+                                <p className="text-xs text-gray-500">Business vs Personal ratios.</p>
+                            </div>
+                            <div className="flex-1 w-full min-h-0 flex items-center justify-center mt-1">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie data={distributionData || []} cx="50%" cy="50%" innerRadius={55} outerRadius={80} paddingAngle={4} dataKey="value" stroke="none" animationDuration={1200} cornerRadius={3}>
+                                            {(distributionData || []).map((entry, i) => (<Cell key={`cell-${i}`} fill={COLORS[i % COLORS.length]} />))}
+                                        </Pie>
+                                        <Tooltip contentStyle={{ backgroundColor: '#111111', borderColor: '#333', borderRadius: '10px', color: '#fff', fontSize: '13px' }} itemStyle={{ color: '#fff', fontWeight: 600 }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                            <div className="flex flex-wrap gap-3 justify-center pb-1">
+                                {(distributionData || []).map((entry, i) => (
+                                    <div key={i} className="flex items-center gap-1.5 text-xs font-medium text-gray-400">
+                                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }}></div>
+                                        <span>{entry.name} ({entry.value})</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Sync Feed (Spans 2 columns) */}
-                        <div className="lg:col-span-2 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden flex flex-col h-full min-h-[400px]">
-                            <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">Recent Sync Activity</h3>
+                    {/* ===== TASK 4 & 5: INTELLIGENCE FEED + HEALTH ===== */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                        {/* Intelligence Feed */}
+                        <div className={`lg:col-span-2 ${CARD} overflow-hidden flex flex-col min-h-[420px]`}>
+                            <div className="p-5 border-b border-[#222222]">
+                                <h3 className="text-sm font-semibold text-white">Intelligence Feed</h3>
+                                <p className="text-xs text-gray-500">Real-time inbound lead activity.</p>
                             </div>
                             {(limitReached || trialExpired) ? (
-                                <div className="p-8 text-center text-gray-500 dark:text-gray-400 my-auto">
-                                    <AlertTriangle size={32} className="mx-auto mb-3 opacity-50" />
-                                    <p className="text-sm">Syncing is currently paused. Upgrade or subscribe to resume.</p>
+                                <div className="p-8 text-center text-gray-500 my-auto">
+                                    <AlertTriangle size={28} className="mx-auto mb-3 opacity-50" />
+                                    <p className="text-sm">Syncing is paused. Upgrade to resume.</p>
                                 </div>
                             ) : syncLogs && syncLogs.length > 0 ? (
-                                <ul className="flex-1 divide-y divide-gray-100 dark:divide-gray-800 overflow-y-auto">
+                                <ul className="flex-1 divide-y divide-[#1a1a1a] overflow-y-auto">
                                     {syncLogs.map(log => {
                                         const date = new Date(log.sync_time);
                                         const now = new Date();
                                         const diffMs = now - date;
                                         const diffMins = Math.floor(diffMs / 60000);
                                         const diffHours = Math.floor(diffMins / 60);
-                                        const timeAgo = diffHours > 0 ? `${diffHours}h ago` : diffMins > 0 ? `${diffMins}m ago` : "just now";
+                                        const diffDays = Math.floor(diffHours / 24);
+                                        const timeAgo = diffDays > 0 ? `${diffDays}d ago` : diffHours > 0 ? `${diffHours}h ago` : diffMins > 0 ? `${diffMins}m ago` : "just now";
+                                        const intent = getIntent(log.lead_email);
+                                        const initials = log.lead_email ? log.lead_email.substring(0, 2).toUpperCase() : "??";
 
                                         return (
-                                            <li key={log.id} className="p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors gap-3">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-gray-900 dark:text-white text-sm">{log.lead_email}</span>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{timeAgo}</span>
+                                            <li key={log.id} onClick={() => setSelectedLead(log)} className="px-5 py-4 flex items-center gap-4 hover:bg-white/[0.02] cursor-pointer transition-colors group">
+                                                <div className="w-9 h-9 rounded-full bg-[#2563eb]/15 border border-[#2563eb]/30 flex items-center justify-center text-xs font-bold text-blue-400 flex-shrink-0">
+                                                    {initials}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2.5 py-1 rounded-md font-medium text-xs border border-green-200 dark:border-green-800">
-                                                    <span>Synced to Notion</span>
-                                                    {/* Custom Link Icon as per visual */}
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-sm font-medium text-white truncate block">{log.lead_email}</span>
                                                 </div>
+                                                <IntentPill intent={intent} />
+                                                <span className="text-xs text-gray-600 whitespace-nowrap hidden sm:block">{timeAgo}</span>
+                                                <ChevronRight size={14} className="text-gray-600 group-hover:text-gray-400 transition-colors flex-shrink-0" />
                                             </li>
-                                        )
+                                        );
                                     })}
                                 </ul>
                             ) : (
-                                <div className="p-8 text-center text-gray-500 dark:text-gray-400 my-auto">
+                                <div className="p-8 text-center text-gray-500 my-auto">
                                     <p className="text-sm">No sync activity yet.</p>
                                 </div>
                             )}
                         </div>
 
-                        {/* System Health Sidebar */}
-                        <div className="lg:col-span-1 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border border-gray-100 dark:border-gray-800 rounded-3xl shadow-xl overflow-hidden h-fit">
-                            <div className="p-6 border-b border-gray-100 dark:border-gray-800">
-                                <h3 className="text-sm font-medium text-gray-900 dark:text-white">System Health</h3>
-                            </div>
-                            <div className="p-6 space-y-6">
-                                {/* Gmail Status */}
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
+                        {/* ===== TASK 5: HEALTH SIDEBAR ===== */}
+                        <div className={`${CARD} p-5 h-fit`}>
+                            <h3 className="text-sm font-semibold text-white mb-5">Integration Health</h3>
+                            <div className="space-y-5">
+                                {/* Gmail Step */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex flex-col items-center">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${gmailConnected ? 'bg-[#10b981]/15 border border-[#10b981]/40' : 'bg-red-500/15 border border-red-500/40'}`}>
                                             {gmailConnected ? (
-                                                <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
-                                                    <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                </div>
+                                                <svg className="w-4 h-4 text-[#10b981]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                             ) : (
-                                                <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
-                                                    <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
-                                                </div>
+                                                <X className="w-4 h-4 text-red-500" strokeWidth="3" />
                                             )}
-                                            <span className={`text-sm ${gmailConnected ? 'text-green-500' : 'text-red-500'}`}>Gmail: {gmailConnected ? "Connected" : "Disconnected"}</span>
                                         </div>
-                                        {gmailConnected && (
-                                            <button onClick={handleGoogleConnect} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors underline">
-                                                Reconnect
-                                            </button>
+                                        <div className={`w-px h-6 ${gmailConnected ? 'bg-[#10b981]/30' : 'bg-red-500/30'}`}></div>
+                                    </div>
+                                    <div className="pt-1 flex-1">
+                                        <p className={`text-sm font-medium ${gmailConnected ? 'text-[#10b981]' : 'text-red-400'}`}>Gmail {gmailConnected ? "Connected" : "Disconnected"}</p>
+                                        {!gmailConnected ? (
+                                            <button onClick={handleGoogleConnect} className="mt-2 text-xs bg-[#2563eb] hover:bg-blue-700 text-white py-1.5 px-4 rounded-lg transition-all font-semibold">Reconnect</button>
+                                        ) : (
+                                            <button onClick={handleGoogleConnect} className="mt-1 text-xs text-gray-500 hover:text-white transition-colors underline">Reconnect</button>
                                         )}
                                     </div>
-                                    {!gmailConnected && (
-                                        <button onClick={handleGoogleConnect} className="text-xs bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-xl w-fit transition-all shadow-md shadow-blue-500/20 font-bold ml-8">
-                                            Connect Gmail
-                                        </button>
-                                    )}
                                 </div>
 
-                                {/* Notion Status */}
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-3">
+                                {/* Notion Step */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex flex-col items-center">
+                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${notionConfigured ? 'bg-[#10b981]/15 border border-[#10b981]/40' : 'bg-red-500/15 border border-red-500/40'}`}>
                                             {notionConfigured ? (
-                                                <div className="w-5 h-5 rounded border-2 border-green-500/80 flex items-center justify-center bg-green-500/10">
-                                                    <svg className="w-3.5 h-3.5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                </div>
+                                                <svg className="w-4 h-4 text-[#10b981]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                             ) : (
-                                                <div className="w-5 h-5 rounded border-2 border-red-500/80 flex items-center justify-center bg-red-500/10">
-                                                    <X className="w-3.5 h-3.5 text-red-500" strokeWidth="3" />
-                                                </div>
+                                                <X className="w-4 h-4 text-red-500" strokeWidth="3" />
                                             )}
-                                            <span className={`text-sm ${notionConfigured ? 'text-green-500' : 'text-red-500'}`}>Notion: {notionConfigured ? "Linked" : "Disconnected"}</span>
                                         </div>
-                                        {notionConfigured && (
-                                            <button onClick={() => setShowConfigModal(true)} className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors underline">
-                                                Change
-                                            </button>
+                                        <div className={`w-px h-6 ${notionConfigured ? 'bg-[#10b981]/30' : 'bg-red-500/30'}`}></div>
+                                    </div>
+                                    <div className="pt-1 flex-1">
+                                        <p className={`text-sm font-medium ${notionConfigured ? 'text-[#10b981]' : 'text-red-400'}`}>Notion {notionConfigured ? "Linked" : "Disconnected"}</p>
+                                        {!notionConfigured ? (
+                                            <button onClick={() => setShowConfigModal(true)} className="mt-2 text-xs bg-[#2563eb] hover:bg-blue-700 text-white py-1.5 px-4 rounded-lg transition-all font-semibold">Link Notion</button>
+                                        ) : (
+                                            <button onClick={() => setShowConfigModal(true)} className="mt-1 text-xs text-gray-500 hover:text-white transition-colors underline">Change</button>
                                         )}
                                     </div>
-                                    {!notionConfigured && (
-                                        <button onClick={() => setShowConfigModal(true)} className="text-xs bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded-xl w-fit transition-all shadow-md shadow-blue-500/20 font-bold ml-8">
-                                            Link Notion
-                                        </button>
-                                    )}
+                                </div>
+
+                                {/* System Status Step */}
+                                <div className="flex items-start gap-3">
+                                    <div className="flex flex-col items-center">
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center bg-[#10b981]/15 border border-[#10b981]/40">
+                                            <Shield size={14} className="text-[#10b981]" />
+                                        </div>
+                                    </div>
+                                    <div className="pt-1">
+                                        <p className="text-sm font-medium text-[#10b981]">API Online</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">All systems operational.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
 
-            {/* ============ INLINE CONFIG MODAL ============ */}
+            {/* ===== SLIDE-OVER PANEL (Task 4) ===== */}
+            <AnimatePresence>
+                {selectedLead && (
+                    <>
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={() => setSelectedLead(null)} />
+                        <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 30, stiffness: 300 }} className="fixed top-0 right-0 h-full w-full max-w-md bg-[#0a0a0a] border-l border-[#222222] z-50 flex flex-col shadow-2xl">
+                            <div className="p-6 border-b border-[#222222] flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-white">Lead Detail</h3>
+                                <button onClick={() => setSelectedLead(null)} className="text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
+                            </div>
+                            <div className="p-6 flex-1 overflow-y-auto space-y-6">
+                                {/* Email */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">Email Address</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-white font-medium text-sm flex-1 truncate">{selectedLead.lead_email}</span>
+                                        <button onClick={() => handleCopyEmail(selectedLead.lead_email)} className="text-xs flex items-center gap-1 text-gray-400 hover:text-white transition-colors bg-[#111111] border border-[#222222] rounded-lg px-3 py-1.5">
+                                            <Copy size={12} />
+                                            {copied ? "Copied!" : "Copy"}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Intent */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">Intent Classification</label>
+                                    <IntentPill intent={getIntent(selectedLead.lead_email)} />
+                                </div>
+
+                                {/* Synced At */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">Synced At</label>
+                                    <p className="text-sm text-gray-300">{new Date(selectedLead.sync_time).toLocaleString()}</p>
+                                </div>
+
+                                {/* Notion Link */}
+                                <div>
+                                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 block">Notion</label>
+                                    <a href={selectedLead.notion_page_url || `https://notion.so`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-[#2563eb] hover:text-blue-400 transition-colors">
+                                        <ExternalLink size={14} />
+                                        Open in Notion
+                                    </a>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* ===== CONFIG MODAL ===== */}
             {showConfigModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-                    <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-800 w-full max-w-md p-6 relative">
-                        <button onClick={() => setShowConfigModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                            <X size={20} />
-                        </button>
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-                            <Database size={20} className="text-blue-500" /> Connect Notion
-                        </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">Enter your Notion Database ID to start syncing leads.</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-[#0a0a0a] rounded-2xl border border-[#222222] shadow-2xl w-full max-w-md p-6 relative">
+                        <button onClick={() => setShowConfigModal(false)} className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"><X size={20} /></button>
+                        <h3 className="text-lg font-bold text-white mb-1 flex items-center gap-2"><Database size={20} className="text-[#2563eb]" /> Connect Notion</h3>
+                        <p className="text-sm text-gray-500 mb-5">Enter your Notion Database ID to start syncing leads.</p>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Database ID <span className="text-red-500">*</span></label>
-                                <input
-                                    type="text"
-                                    value={notionDbId}
-                                    onChange={(e) => setNotionDbId(e.target.value)}
-                                    placeholder="e.g. 1a2b3c4d5e6f7g8h9i0j"
-                                    className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                                    autoFocus
-                                />
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Database ID <span className="text-red-500">*</span></label>
+                                <input type="text" value={notionDbId} onChange={(e) => setNotionDbId(e.target.value)} placeholder="e.g. 1a2b3c4d5e6f7g8h9i0j" className="w-full border border-[#333] bg-[#111111] text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] outline-none transition-all" autoFocus />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">API Key <span className="text-gray-400 dark:text-gray-500">(optional)</span></label>
-                                <input
-                                    type="password"
-                                    value={notionApiKey}
-                                    onChange={(e) => setNotionApiKey(e.target.value)}
-                                    placeholder="secret_..."
-                                    className="w-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all shadow-sm"
-                                />
+                                <label className="block text-sm font-medium text-gray-300 mb-1">API Key <span className="text-gray-600">(optional)</span></label>
+                                <input type="password" value={notionApiKey} onChange={(e) => setNotionApiKey(e.target.value)} placeholder="secret_..." className="w-full border border-[#333] bg-[#111111] text-white rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-[#2563eb]/30 focus:border-[#2563eb] outline-none transition-all" />
                             </div>
-                            <button
-                                onClick={handleSaveNotionConfig}
-                                disabled={isSaving}
-                                className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                <Save size={16} />
-                                {isSaving ? "Saving..." : "Save & Connect"}
+                            <button onClick={handleSaveNotionConfig} disabled={isSaving} className="w-full flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white font-semibold py-2.5 px-6 rounded-xl shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <Save size={16} /> {isSaving ? "Saving..." : "Save & Connect"}
                             </button>
                         </div>
                     </div>
