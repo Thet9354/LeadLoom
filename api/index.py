@@ -314,18 +314,39 @@ async def get_user_profile(user_id: str):
 
 
 @app.get("/api/user/sync-logs")
-async def get_sync_logs(user_id: str):
-    """Fetches recent sync logs for a user."""
+async def get_sync_logs(user_id: str, limit: int = 10, offset: int = 0, search: str = "", days: int = 0):
+    """Fetches paginated sync logs with optional search and date filtering."""
     from api.database import supabase
+    from datetime import datetime, timedelta
+    
     if not supabase:
         return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
-        
     if not user_id:
         return JSONResponse(status_code=400, content={"error": "user_id is required"})
         
     try:
-        response = supabase.table("sync_logs").select("*").eq("user_id", user_id).order("sync_time", desc=True).limit(20).execute()
-        return {"success": True, "data": response.data}
+        query = supabase.table("sync_logs").select("*", count="exact").eq("user_id", user_id)
+        
+        # Date filter
+        if days > 0:
+            cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
+            query = query.gte("sync_time", cutoff)
+        
+        # Search filter (case-insensitive LIKE on lead_email)
+        if search:
+            query = query.ilike("lead_email", f"%{search}%")
+        
+        query = query.order("sync_time", desc=True)
+        
+        # Pagination
+        start = offset
+        end = offset + limit - 1
+        query = query.range(start, end)
+        
+        response = query.execute()
+        total = response.count if response.count is not None else 0
+        
+        return {"success": True, "data": response.data, "total": total, "has_more": (offset + limit) < total}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
