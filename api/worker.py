@@ -271,7 +271,16 @@ def run_all_syncs():
              if result.get("success"):
                   success_count += 1
                   print(f"    ✓ Synced lead from {sender_email} (Status: {status})")
-                  insert_sync_log(user_id=user_id, lead_email=sender_email)
+                  # Build a summary from AI output for dashboard tooltip
+                  summary_parts = []
+                  if company and company != "Pending Parsing":
+                      summary_parts.append(f"Company: {company}")
+                  if reason:
+                      summary_parts.append(reason)
+                  if hook and not hook.startswith("[POSSIBLE LEAD]"):
+                      summary_parts.append(hook[:120])
+                  ai_summary = " — ".join(summary_parts) if summary_parts else ""
+                  insert_sync_log(user_id=user_id, lead_email=sender_email, summary=ai_summary)
                   increment_sync_count(user_id=user_id)
              else:
                   print(f"    ✗ Failed to sync lead: {result.get('error')}")

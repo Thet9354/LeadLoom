@@ -308,9 +308,28 @@ async def get_user_profile(user_id: str):
         "trial_start_date": result.get("trial_start_date"),
         "current_month_sync_count": result.get("current_month_sync_count", 0),
         "gmail_connected": bool(result.get("gmail_refresh_token")),
-        "notion_configured": bool(result.get("notion_db_id"))
+        "notion_configured": bool(result.get("notion_db_id")),
+        "avg_lead_value": result.get("avg_lead_value", 500)
     }
     return {"success": True, "data": safe_data}
+
+
+@app.post("/api/user/avg-lead-value")
+async def save_avg_lead_value(request: Request):
+    """Save the user's custom average lead value for the Revenue Protected card."""
+    from api.database import supabase
+    if not supabase:
+        return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
+    try:
+        body = await request.json()
+        user_id = body.get("user_id")
+        value = body.get("avg_lead_value", 500)
+        if not user_id:
+            return JSONResponse(status_code=400, content={"error": "user_id is required"})
+        supabase.table("profiles").update({"avg_lead_value": int(value)}).eq("id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.get("/api/user/sync-logs")

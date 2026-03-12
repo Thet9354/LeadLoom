@@ -126,16 +126,19 @@ def get_user_config(user_id: str) -> dict:
         return {"error": str(e)}
 
 
-def insert_sync_log(user_id: str, lead_email: str) -> dict:
+def insert_sync_log(user_id: str, lead_email: str, summary: str = "") -> dict:
     """Record a successful sync operation in the sync_logs table."""
     if not supabase:
         return {"error": "Supabase client not configured"}
 
     try:
-        response = supabase.table("sync_logs").insert({
+        row = {
             "user_id": user_id,
             "lead_email": lead_email
-        }).execute()
+        }
+        if summary:
+            row["summary"] = summary
+        response = supabase.table("sync_logs").insert(row).execute()
         return response.data
     except Exception as e:
         print(f"DB Insert Sync Log Error: {e}")
