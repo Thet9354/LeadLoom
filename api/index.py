@@ -327,8 +327,8 @@ async def save_onboarding(request: Request):
         body = await request.json()
         user_id = body.get("user_id")
         onboarding_data = body.get("onboarding_data")
-        if not user_id or not onboarding_data:
-            return JSONResponse(status_code=400, content={"error": "user_id and onboarding_data are required"})
+        if not user_id:
+            return JSONResponse(status_code=400, content={"error": "user_id is required"})
         supabase.table("profiles").update({"onboarding_data": onboarding_data}).eq("id", user_id).execute()
         return {"success": True}
     except Exception as e:
