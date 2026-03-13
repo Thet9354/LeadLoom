@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Database, AlertTriangle, CheckCircle, X, Save, AlertCircle, Zap, Crown, CreditCard, TrendingUp, Search, ChevronRight, ChevronDown, Loader2, Pencil } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
-import confetti from "canvas-confetti";
 import Breadcrumb from "../components/Breadcrumb";
 import LeadDetail, { getIntent, IntentPill } from "../components/LeadDetail";
 import { API_URL } from '../config';
@@ -29,16 +28,24 @@ const AnimatedNumber = ({ value, prefix = "", suffix = "" }) => {
     return <span>{prefix}{displayValue.toLocaleString()}{suffix}</span>;
 };
 
-// Summary tooltip for feed rows
+// Summary tooltip for feed rows — shows below the email, parsed into bullet points
 const SummaryTooltip = ({ summary, children }) => {
     const [show, setShow] = useState(false);
     if (!summary) return children;
+    const parts = summary.split(" — ").filter(Boolean);
     return (
         <div className="relative" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
             {children}
             {show && (
-                <div className="absolute left-0 bottom-full mb-2 z-30 w-72 bg-[#1a1a1a] border border-[#333] rounded-lg p-3 shadow-xl pointer-events-none">
-                    <p className="text-xs text-gray-400 leading-relaxed">{summary}</p>
+                <div className="absolute left-0 top-full mt-2 z-30 w-72 bg-[#1a1a1a] border border-[#333] rounded-lg p-3 shadow-xl pointer-events-none">
+                    <ul className="space-y-1.5">
+                        {parts.map((part, i) => (
+                            <li key={i} className="flex items-start gap-2 text-xs text-gray-400 leading-relaxed">
+                                <span className="text-gray-600 mt-0.5">•</span>
+                                <span>{part}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
         </div>
@@ -90,9 +97,6 @@ export default function Dashboard({ session }) {
     const [tempValue, setTempValue] = useState("500");
     const revenueInputRef = useRef(null);
 
-    // Confetti: track last known lead count
-    const prevLeadCountRef = useRef(null);
-
     const location = useLocation();
 
     // Derived
@@ -120,19 +124,6 @@ export default function Dashboard({ session }) {
             setTempValue(String(userProfile.avg_lead_value));
         }
     }, [userProfile?.avg_lead_value]);
-
-    // Confetti trigger when total leads increases
-    useEffect(() => {
-        if (prevLeadCountRef.current !== null && totalLeads > prevLeadCountRef.current) {
-            confetti({
-                particleCount: 80,
-                spread: 70,
-                origin: { y: 0.3 },
-                colors: ['#2563eb', '#ffffff', '#60a5fa', '#93c5fd']
-            });
-        }
-        prevLeadCountRef.current = totalLeads;
-    }, [totalLeads]);
 
     // URL params
     useEffect(() => {
