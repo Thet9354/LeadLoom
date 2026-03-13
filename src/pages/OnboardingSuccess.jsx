@@ -163,7 +163,7 @@ export default function OnboardingSuccess({ session }) {
                         onClick={handleEnter}
                         className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-sm py-3 px-8 rounded-xl shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-blue-500/40"
                     >
-                        Enter Command Center <ArrowRight size={16} />
+                        Go to Dashboard <ArrowRight size={16} />
                     </button>
                     <p className="text-xs text-gray-600 mt-3">You can update your Brand DNA anytime from Settings.</p>
                 </motion.div>
