@@ -61,8 +61,23 @@ export default function OnboardingSuccess({ session }) {
         fetchPreview();
     }, [session?.user?.id]);
 
-    const handleEnter = () => {
-        navigate("/dashboard", { replace: true });
+    const [entering, setEntering] = useState(false);
+
+    const handleEnter = async () => {
+        setEntering(true);
+        // Fire celebratory confetti burst
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 }, colors: ['#2563eb', '#ffffff', '#06b6d4', '#10b981', '#93c5fd'] });
+        // Persist onboarding_complete: true
+        if (session?.user?.id) {
+            try {
+                await fetch(`${API_URL}/api/user/toggle-automation`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: session.user.id, enabled: false, onboarding_complete: true }),
+                });
+            } catch (err) { /* best-effort */ }
+        }
+        setTimeout(() => navigate("/dashboard", { replace: true }), 1200);
     };
 
     return (

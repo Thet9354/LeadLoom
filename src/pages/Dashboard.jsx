@@ -97,6 +97,9 @@ export default function Dashboard({ session }) {
     const [tempValue, setTempValue] = useState("500");
     const revenueInputRef = useRef(null);
 
+    // Auto-response toggle
+    const [automationEnabled, setAutomationEnabled] = useState(false);
+
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -132,6 +135,13 @@ export default function Dashboard({ session }) {
             setTempValue(String(userProfile.avg_lead_value));
         }
     }, [userProfile?.avg_lead_value]);
+
+    // Hydrate automationEnabled from profile
+    useEffect(() => {
+        if (userProfile?.automation_enabled != null) {
+            setAutomationEnabled(userProfile.automation_enabled);
+        }
+    }, [userProfile?.automation_enabled]);
 
     // URL params
     useEffect(() => {
@@ -344,13 +354,37 @@ export default function Dashboard({ session }) {
                         </div>
                     </div>
 
-                    {/* System Pulse */}
+                    {/* System Pulse + Auto-Response */}
                     <div className={`${CARD} p-5 flex flex-col justify-between h-[110px]`}>
-                        <span className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">System Pulse</span>
-                        <div className="flex items-center gap-2.5">
-                            <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#10b981] opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-[#10b981]"></span></span>
-                            <span className="text-base font-bold text-white">Active & Secure</span>
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-medium text-gray-500 uppercase tracking-widest">System Pulse</span>
                         </div>
+                        <div className="flex items-center gap-2.5">
+                            <span className="relative flex h-3 w-3"><span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${automationEnabled ? 'bg-[#2563eb]' : 'bg-[#10b981]'} opacity-75`}></span><span className={`relative inline-flex rounded-full h-3 w-3 ${automationEnabled ? 'bg-[#2563eb]' : 'bg-[#10b981]'}`}></span></span>
+                            <span className="text-sm font-bold text-white">{automationEnabled ? 'AI Active' : 'Active & Secure'}</span>
+                        </div>
+                        <button
+                            onClick={async () => {
+                                const next = !automationEnabled;
+                                setAutomationEnabled(next);
+                                try {
+                                    await fetch(`${API_URL}/api/user/toggle-automation`, {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ user_id: session?.user?.id, enabled: next }),
+                                    });
+                                } catch (err) { console.error(err); }
+                            }}
+                            className={`flex items-center gap-2 text-[10px] font-semibold rounded-lg px-2 py-1 transition-all ${automationEnabled
+                                ? 'bg-[#2563eb]/20 text-[#2563eb] border border-[#2563eb]/30'
+                                : 'bg-white/5 text-gray-500 border border-[#333] hover:text-white hover:border-gray-500'
+                                }`}
+                        >
+                            <span className={`w-6 h-3.5 rounded-full relative transition-all ${automationEnabled ? 'bg-[#2563eb]' : 'bg-gray-700'}`}>
+                                <span className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-all ${automationEnabled ? 'left-3' : 'left-0.5'}`}></span>
+                            </span>
+                            Auto-Response
+                        </button>
                     </div>
                 </div>
 
@@ -466,7 +500,19 @@ export default function Dashboard({ session }) {
                             )}
                         </>
                     ) : (
-                        <div className="p-10 text-center text-gray-600"><p className="text-sm">{feedLoading ? "Loading..." : searchQuery ? "No leads match your search." : "No sync activity yet."}</p></div>
+                        <div className="p-10 text-center text-gray-600">
+                            {feedLoading ? <p className="text-sm">Loading...</p> : searchQuery ? <p className="text-sm">No leads match your search.</p> : (
+                                <div className="space-y-3">
+                                    <p className="text-sm">No sync activity yet.</p>
+                                    <p className="text-xs text-gray-700">Send yourself a test email from a business address, then wait for the next sync cycle.</p>
+                                    <button onClick={() => {
+                                        window.location.href = `mailto:${userProfile?.email || ''}?subject=Interested%20in%20your%20services&body=Hi%2C%20I%20found%20your%20website%20and%20I%27m%20interested%20in%20learning%20more%20about%20what%20you%20offer.%20Could%20we%20schedule%20a%20call%3F`;
+                                    }} className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white font-semibold text-xs py-2 px-4 rounded-lg shadow-md shadow-blue-500/20 transition-all hover:-translate-y-0.5">
+                                        <Zap size={14} /> Send a Test Lead
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

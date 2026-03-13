@@ -310,7 +310,9 @@ async def get_user_profile(user_id: str):
         "gmail_connected": bool(result.get("gmail_refresh_token")),
         "notion_configured": bool(result.get("notion_db_id")),
         "avg_lead_value": result.get("avg_lead_value", 500),
-        "onboarding_data": result.get("onboarding_data")
+        "onboarding_data": result.get("onboarding_data"),
+        "onboarding_complete": bool(result.get("onboarding_complete", False)),
+        "automation_enabled": bool(result.get("automation_enabled", False))
     }
     return {"success": True, "data": safe_data}
 
@@ -329,6 +331,29 @@ async def save_onboarding(request: Request):
             return JSONResponse(status_code=400, content={"error": "user_id and onboarding_data are required"})
         supabase.table("profiles").update({"onboarding_data": onboarding_data}).eq("id", user_id).execute()
         return {"success": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+@app.post("/api/user/toggle-automation")
+async def toggle_automation(request: Request):
+    """Toggle the automation_enabled flag and/or onboarding_complete for a user."""
+    from api.database import supabase
+    if not supabase:
+        return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
+    try:
+        body = await request.json()
+        user_id = body.get("user_id")
+        if not user_id:
+            return JSONResponse(status_code=400, content={"error": "user_id is required"})
+        update_data = {}
+        if "enabled" in body:
+            update_data["automation_enabled"] = body["enabled"]
+        if "onboarding_complete" in body:
+            update_data["onboarding_complete"] = body["onboarding_complete"]
+        if update_data:
+            supabase.table("profiles").update(update_data).eq("id", user_id).execute()
+        return {"success": True, **update_data}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
