@@ -333,6 +333,42 @@ async def save_onboarding(request: Request):
         return JSONResponse(status_code=500, content={"error": str(e)})
 
 
+@app.post("/api/test-onboarding-reply")
+async def test_onboarding_reply(request: Request):
+    """Generate a sample AI reply using the user's onboarding brand DNA."""
+    import os
+    try:
+        body = await request.json()
+        onboarding_data = body.get("onboarding_data", {})
+        bname = onboarding_data.get("business_name", "your company")
+        bdesc = onboarding_data.get("business_description", "")
+        tone = onboarding_data.get("tone", "Professional")
+        cta = onboarding_data.get("cta_link", "")
+        cta_label = onboarding_data.get("cta_label", "Learn More")
+
+        fake_inquiry = "Hey there! I found your website and I'm really interested in what you offer. We're a small team of 5 looking for a solution to manage our leads better. Could you tell me more about your pricing and how to get started?"
+
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            # Fallback if no API key
+            return {"success": True, "inquiry": fake_inquiry, "reply": f"Hi there! Thanks for reaching out to {bname}. We'd love to help your team. {f'Check us out here: {cta}' if cta else 'Let us know how we can help!'}", "fallback": True}
+
+        from google import genai
+        client = genai.Client()
+        prompt = f"""You are a {tone.lower()} sales assistant for "{bname}". {f'They {bdesc}.' if bdesc else ''}
+Write a short, compelling reply (3-4 sentences max) to this inquiry. {f'Include this CTA: {cta}' if cta else ''}
+End with an actionable next step.
+
+Inquiry: "{fake_inquiry}"
+
+Reply:"""
+        response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+        reply_text = response.text.strip().strip('"')
+        return {"success": True, "inquiry": fake_inquiry, "reply": reply_text}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+
 @app.post("/api/user/avg-lead-value")
 async def save_avg_lead_value(request: Request):
     """Save the user's custom average lead value for the Revenue Protected card."""

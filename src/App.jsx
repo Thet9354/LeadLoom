@@ -22,6 +22,7 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Contact from "./pages/Contact";
 import Onboarding from "./pages/Onboarding";
+import OnboardingSuccess from "./pages/OnboardingSuccess";
 
 function PageWrapper({ children }) {
   return (
@@ -96,6 +97,11 @@ function App() {
           <Route path="/onboarding" element={
             <PrivateRoute session={session}>
               <PageWrapper><Onboarding session={session} /></PageWrapper>
+            </PrivateRoute>
+          } />
+          <Route path="/onboarding/success" element={
+            <PrivateRoute session={session}>
+              <PageWrapper><OnboardingSuccess session={session} /></PageWrapper>
             </PrivateRoute>
           } />
         </Routes>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, ArrowLeft, Sparkles, Building2, Target, MessageSquare, Link2, Check } from "lucide-react";
@@ -24,6 +24,21 @@ export default function Onboarding({ session }) {
     const [step, setStep] = useState(0);
     const [direction, setDirection] = useState(1);
     const [saving, setSaving] = useState(false);
+
+    // Guard: redirect to dashboard if onboarding already completed
+    useEffect(() => {
+        if (!session?.user?.id) return;
+        const check = async () => {
+            try {
+                const res = await fetch(`${API_URL}/api/user/profile?user_id=${session.user.id}`);
+                const data = await res.json();
+                if (data?.data?.onboarding_data) {
+                    navigate("/dashboard", { replace: true });
+                }
+            } catch (err) { /* ignore */ }
+        };
+        check();
+    }, [session?.user?.id, navigate]);
 
     const [formData, setFormData] = useState({
         business_name: "",
@@ -51,7 +66,7 @@ export default function Onboarding({ session }) {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ user_id: session.user.id, onboarding_data: formData }),
             });
-            navigate("/dashboard");
+            navigate("/onboarding/success");
         } catch (err) {
             console.error("Onboarding save failed:", err);
         } finally {
