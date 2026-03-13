@@ -25,7 +25,7 @@ def run_all_syncs():
     # Join integrations with profiles to get all needed fields
     try:
          query = supabase.table("integrations") \
-            .select("user_id, notion_db_id, notion_api_key, gmail_refresh_token, profiles!inner(id, email, is_pro, plan_type, trial_start_date, current_month_sync_count)") \
+            .select("user_id, notion_db_id, notion_api_key, gmail_refresh_token, profiles!inner(id, email, is_pro, plan_type, trial_start_date, current_month_sync_count, onboarding_data)") \
             .not_.is_("gmail_refresh_token", "null") \
             .not_.is_("notion_db_id", "null") \
             .execute()
@@ -52,6 +52,7 @@ def run_all_syncs():
             "plan_type": profile.get("plan_type", "starter"),
             "trial_start_date": profile.get("trial_start_date"),
             "current_month_sync_count": profile.get("current_month_sync_count", 0),
+            "onboarding_data": profile.get("onboarding_data"),
         })
         
     print(f"Found {len(users)} active synced users.")
@@ -170,10 +171,31 @@ def run_all_syncs():
              hook = email.get("subject", "")
              
              if ai_client and email.get("body"):
-                 domain_type = "a business domain" if is_business_domain else "a personal/free domain"
-                 prompt = f"""
+                  # Build brand context if onboarding_data exists
+                  brand_ctx = ""
+                  ob_data = user.get("onboarding_data")
+                  if ob_data and isinstance(ob_data, dict):
+                      bname = ob_data.get("business_name", "")
+                      bdesc = ob_data.get("business_description", "")
+                      target = ob_data.get("target_lead", "")
+                      tone = ob_data.get("tone", "")
+                      cta = ob_data.get("cta_link", "")
+                      if bname:
+                          brand_ctx += f"\nBRAND CONTEXT: You are evaluating leads for \"{bname}\"."
+                      if bdesc:
+                          brand_ctx += f" They {bdesc}."
+                      if target:
+                          brand_ctx += f" Their ideal lead profile: {target}."
+                      if tone:
+                          brand_ctx += f" Use a {tone} tone in your Hook."
+                      if cta:
+                          brand_ctx += f" Include this CTA in your Hook: {cta}."
+
+                  domain_type = "a business domain" if is_business_domain else "a personal/free domain"
+                  prompt = f"""
                  You are an expert Sales Development Representative (SDR) evaluating inbound emails.
                  Analyze the following email from a potential lead. The sender is using {domain_type}.
+                 {brand_ctx}
                  
                  Determine if this is a genuine lead inquiring about our services/products, 
                  a possible lead (ambiguous but worth checking), or not a lead (spam, promotion, newsletter, internal, irrelevant).
@@ -189,55 +211,54 @@ def run_all_syncs():
                  - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
                  - PAIN_POINT: [What problem are they trying to solve?]
                  - NEXT_STEPS: [Actionable next step for the sales rep]
-                 
-                 Return the output STRICTLY in this JSON-like key-value format exactly:
-                 STATUS: [LEAD | POSSIBLE_LEAD | NOT_LEAD]
-                 REASON: [Short explanation of why]
-                 COMPANY: [Company Name]
-                 PRIORITY: [Priority Level]
-                 LEAD_SOURCE: [Source]
-                 LEAD_STAGE: [Chosen Stage]
-                 VALUE: [Estimated Value or Size]
-                 PAIN_POINT: [Pain Point]
-                 NEXT_STEPS: [Next Steps]
-                 HOOK: [Your Hook]
+                                  Return the output STRICTLY in this JSON-like key-value format exactly:
+                  STATUS: [LEAD | POSSIBLE_LEAD | NOT_LEAD]
+                  REASON: [Short explanation of why]
+                  COMPANY: [Company Name]
+                  PRIORITY: [Priority Level]
+                  LEAD_SOURCE: [Source]
+                  LEAD_STAGE: [Chosen Stage]
+                  VALUE: [Estimated Value or Size]
+                  PAIN_POINT: [Pain Point]
+                  NEXT_STEPS: [Next Steps]
+                  HOOK: [Your Hook]
 
-                 Subject: {email.get("subject", "")}
-                 Body: {email.get("body", "")}
-                 """
-                 try:
-                     response = ai_client.models.generate_content(
-                         model='gemini-2.5-flash',
-                         contents=prompt
-                     )
-                     lines = response.text.split('\n')
-                     for line in lines:
-                         line = line.strip()
-                         if line.startswith("STATUS:"):
-                             status = line.replace("STATUS:", "").strip()
-                         elif line.startswith("REASON:"):
-                             reason = line.replace("REASON:", "").strip()
-                         elif line.startswith("COMPANY:"):
-                             company = line.replace("COMPANY:", "").strip()
-                         elif line.startswith("PRIORITY:"):
-                             priority = line.replace("PRIORITY:", "").strip()
-                         elif line.startswith("LEAD_SOURCE:"):
-                             val = line.replace("LEAD_SOURCE:", "").strip()
-                             # Parse comma separated for Multi-Select
-                             lead_source = [src.strip() for src in val.split(',') if src.strip()]
-                         elif line.startswith("LEAD_STAGE:"):
-                             lead_stage = line.replace("LEAD_STAGE:", "").strip()
-                         elif line.startswith("VALUE:"):
-                             value = line.replace("VALUE:", "").strip()
-                         elif line.startswith("PAIN_POINT:"):
-                             pain_point = line.replace("PAIN_POINT:", "").strip()
-                         elif line.startswith("NEXT_STEPS:"):
-                             next_steps = line.replace("NEXT_STEPS:", "").strip()
-                         elif line.startswith("HOOK:"):
-                             hook = line.replace("HOOK:", "").strip()
-                 except Exception as e:
-                     print(f"  [!] Gemini Error: {e}")
-                     company = "Pending Parsing"
+                  Subject: {email.get("subject", "")}
+                  Body: {email.get("body", "")}
+                  """
+                  try:
+                      response = ai_client.models.generate_content(
+                          model='gemini-2.5-flash',
+                          contents=prompt
+                      )
+                      lines = response.text.split('\n')
+                      for line in lines:
+                          line = line.strip()
+                          if line.startswith("STATUS:"):
+                              status = line.replace("STATUS:", "").strip()
+                          elif line.startswith("REASON:"):
+                              reason = line.replace("REASON:", "").strip()
+                          elif line.startswith("COMPANY:"):
+                              company = line.replace("COMPANY:", "").strip()
+                          elif line.startswith("PRIORITY:"):
+                              priority = line.replace("PRIORITY:", "").strip()
+                          elif line.startswith("LEAD_SOURCE:"):
+                              val = line.replace("LEAD_SOURCE:", "").strip()
+                              # Parse comma separated for Multi-Select
+                              lead_source = [src.strip() for src in val.split(',') if src.strip()]
+                          elif line.startswith("LEAD_STAGE:"):
+                              lead_stage = line.replace("LEAD_STAGE:", "").strip()
+                          elif line.startswith("VALUE:"):
+                              value = line.replace("VALUE:", "").strip()
+                          elif line.startswith("PAIN_POINT:"):
+                              pain_point = line.replace("PAIN_POINT:", "").strip()
+                          elif line.startswith("NEXT_STEPS:"):
+                              next_steps = line.replace("NEXT_STEPS:", "").strip()
+                          elif line.startswith("HOOK:"):
+                              hook = line.replace("HOOK:", "").strip()
+                  except Exception as e:
+                      print(f"  [!] Gemini Error: {e}")
+                      company = "Pending Parsing"
              else:
                  company = "Pending Parsing"
 

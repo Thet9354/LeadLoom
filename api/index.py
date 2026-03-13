@@ -309,9 +309,28 @@ async def get_user_profile(user_id: str):
         "current_month_sync_count": result.get("current_month_sync_count", 0),
         "gmail_connected": bool(result.get("gmail_refresh_token")),
         "notion_configured": bool(result.get("notion_db_id")),
-        "avg_lead_value": result.get("avg_lead_value", 500)
+        "avg_lead_value": result.get("avg_lead_value", 500),
+        "onboarding_data": result.get("onboarding_data")
     }
     return {"success": True, "data": safe_data}
+
+
+@app.post("/api/user/onboarding")
+async def save_onboarding(request: Request):
+    """Save the user's AI Brand DNA onboarding data."""
+    from api.database import supabase
+    if not supabase:
+        return JSONResponse(status_code=500, content={"error": "Supabase not configured"})
+    try:
+        body = await request.json()
+        user_id = body.get("user_id")
+        onboarding_data = body.get("onboarding_data")
+        if not user_id or not onboarding_data:
+            return JSONResponse(status_code=400, content={"error": "user_id and onboarding_data are required"})
+        supabase.table("profiles").update({"onboarding_data": onboarding_data}).eq("id", user_id).execute()
+        return {"success": True}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
 
 
 @app.post("/api/user/avg-lead-value")

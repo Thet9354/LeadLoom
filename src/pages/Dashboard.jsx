@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Database, AlertTriangle, CheckCircle, X, Save, AlertCircle, Zap, Crown, CreditCard, TrendingUp, Search, ChevronRight, ChevronDown, Loader2, Pencil } from "lucide-react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import Breadcrumb from "../components/Breadcrumb";
 import LeadDetail, { getIntent, IntentPill } from "../components/LeadDetail";
@@ -98,6 +98,14 @@ export default function Dashboard({ session }) {
     const revenueInputRef = useRef(null);
 
     const location = useLocation();
+    const navigate = useNavigate();
+
+    // Auto-redirect to onboarding if not completed
+    useEffect(() => {
+        if (userProfile && userProfile.onboarding_data === null) {
+            navigate("/onboarding", { replace: true });
+        }
+    }, [userProfile, navigate]);
 
     // Derived
     const gmailConnected = !!userProfile?.gmail_connected;
