@@ -65,8 +65,6 @@ export default function OnboardingSuccess({ session }) {
 
     const handleEnter = async () => {
         setEntering(true);
-        // Fire celebratory confetti burst
-        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 }, colors: ['#2563eb', '#ffffff', '#06b6d4', '#10b981', '#93c5fd'] });
         // Persist onboarding_complete: true
         if (session?.user?.id) {
             try {
@@ -77,7 +75,7 @@ export default function OnboardingSuccess({ session }) {
                 });
             } catch (err) { /* best-effort */ }
         }
-        setTimeout(() => navigate("/dashboard", { replace: true }), 1200);
+        navigate("/dashboard", { replace: true });
     };
 
     return (
