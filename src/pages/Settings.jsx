@@ -331,11 +331,11 @@ export default function SettingsPage({ session }) {
                                 <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
                                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Live Tone Preview</p>
                                     <p className={`text-sm leading-relaxed transition-all ${dna.tone === "Bold" ? "text-gray-900 dark:text-white font-bold" :
-                                            dna.tone === "Casual" ? "text-gray-600 dark:text-gray-300 italic" :
-                                                dna.tone === "Friendly" ? "text-blue-600 dark:text-blue-400" :
-                                                    dna.tone === "Empathetic" ? "text-purple-600 dark:text-purple-400" :
-                                                        dna.tone === "Direct" ? "text-gray-900 dark:text-white font-semibold" :
-                                                            "text-gray-700 dark:text-gray-300"
+                                        dna.tone === "Casual" ? "text-gray-600 dark:text-gray-300 italic" :
+                                            dna.tone === "Friendly" ? "text-blue-600 dark:text-blue-400" :
+                                                dna.tone === "Empathetic" ? "text-purple-600 dark:text-purple-400" :
+                                                    dna.tone === "Direct" ? "text-gray-900 dark:text-white font-semibold" :
+                                                        "text-gray-700 dark:text-gray-300"
                                         }`}>
                                         "{TONE_PREVIEWS[dna.tone] || TONE_PREVIEWS.Professional}"
                                     </p>

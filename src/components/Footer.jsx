@@ -67,7 +67,7 @@ export default function Footer() {
                         <p>&copy; {new Date().getFullYear()} LeadLoom. All rights reserved.</p>
                         <div className="mt-4 md:mt-0 flex space-x-4">
                             <a href="https://x.com/LeadLooms" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">Twitter</a>
-                            <a href="https://www.linkedin.com/in/thetpine/" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">LinkedIn</a>
+                            <a href="https://www.linkedin.com" target="_blank" rel="noreferrer" className="hover:text-gray-900 dark:hover:text-white transition-colors">LinkedIn</a>
                         </div>
                     </div>
                 </div>
