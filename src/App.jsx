@@ -6,6 +6,7 @@ import { ThemeProvider } from "./ThemeContext";
 import LinkToast from "./components/LinkToast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 import Home from "./pages/Home";
 import Pricing from "./pages/Pricing";
 import Dashboard from "./pages/Dashboard";
@@ -63,6 +64,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <ScrollToTop />
       <LinkToast />
       <Navbar session={session} />
       <AnimatePresence mode="wait">
