@@ -1,9 +1,10 @@
-import urllib.request, json, os
+from google import genai
+import os
 from dotenv import load_dotenv
-load_dotenv(override=True)
-import google.generativeai as genai
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+load_dotenv(override=True)
+
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 prompt = """
 You are an expert Sales Development Representative (SDR) evaluating inbound emails.
@@ -40,8 +41,10 @@ Body: Hey LeadLoom team, Thanks for getting back to me so quickly! Before I pull
 """
 
 try:
-    model = genai.GenerativeModel('gemini-2.5-flash')
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt
+    )
     print(response.text)
 except Exception as e:
-    print(e)
+    print(f"Error: {e}")

@@ -132,16 +132,13 @@ def run_all_syncs():
         if gemini_api_key:
              from google import genai
              try:
-                 ai_client = genai.Client()
+                 ai_client = genai.Client(api_key=gemini_api_key)
              except Exception as e:
                  print(f"  [!] Failed to initialize Gemini Client: {e}")
 
         # 4. Push to User's Specific Notion Database
         success_count = 0
         for email in emails:
-             
-             # Acknowledge immediately to prevent concurrent polling duplicates
-             remove_unread_label(gmail_service, email["id"])
              
              raw_sender = email.get("sender", "")
              sender_email = raw_sender
@@ -292,6 +289,9 @@ def run_all_syncs():
              if result.get("success"):
                   success_count += 1
                   print(f"    ✓ Synced lead from {sender_email} (Status: {status})")
+                  # Acknowledge ONLY after successful sync or specific status decisions
+                  remove_unread_label(gmail_service, email["id"])
+                  
                   # Build a summary from AI output for dashboard tooltip
                   summary_parts = []
                   if company and company != "Pending Parsing":

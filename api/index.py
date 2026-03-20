@@ -379,7 +379,7 @@ async def test_onboarding_reply(request: Request):
             return {"success": True, "inquiry": fake_inquiry, "reply": f"Hi there! Thanks for reaching out to {bname}. We'd love to help your team. {f'Check us out here: {cta}' if cta else 'Let us know how we can help!'}", "fallback": True}
 
         from google import genai
-        client = genai.Client()
+        client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
         prompt = f"""You are a {tone.lower()} sales assistant for "{bname}". {f'They {bdesc}.' if bdesc else ''}
 Write a short, compelling reply (3-4 sentences max) to this inquiry. {f'Include this CTA: {cta}' if cta else ''}
 End with an actionable next step.
