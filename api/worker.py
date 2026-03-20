@@ -128,13 +128,16 @@ def run_all_syncs():
         
         # Initialize Gemini Client if Key exists
         ai_client = None
-        gemini_api_key = os.environ.get("GEMINI_API_KEY")
+        gemini_api_key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
         if gemini_api_key:
              from google import genai
              try:
+                 print(f"  [+] Initializing Gemini Client (key found)...")
                  ai_client = genai.Client(api_key=gemini_api_key)
              except Exception as e:
                  print(f"  [!] Failed to initialize Gemini Client: {e}")
+        else:
+             print("  [!] GEMINI_API_KEY not found in environment.")
 
         # 4. Push to User's Specific Notion Database
         success_count = 0
@@ -224,6 +227,7 @@ def run_all_syncs():
                   Body: {email.get("body", "")}
                   """
                   try:
+                      print(f"    [AI] Analyzing email: \"{email.get('subject', 'No Subject')}\"")
                       response = ai_client.models.generate_content(
                           model='gemini-2.5-flash',
                           contents=prompt
@@ -262,9 +266,12 @@ def run_all_syncs():
              # Process based on STATUS
              if status == "NOT_LEAD":
                  print(f"    - Skipping non-lead from {sender_email}. Reason: {reason}")
+                 # Still remove label so we don't process it again
+                 remove_unread_label(gmail_service, email["id"])
                  continue
                  
              if status == "POSSIBLE_LEAD":
+                 print(f"    - Potential lead identified: {sender_email}")
                  hook = f"[POSSIBLE LEAD] Reason: {reason}\n\n{hook}"
 
              lead_data = {
