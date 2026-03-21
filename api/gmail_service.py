@@ -59,16 +59,20 @@ def fetch_recent_emails(service, max_results=10) -> list:
                     
             body = "No text content found."
             def extract_body(payload_data):
-                if 'parts' in payload_data:
-                    for part in payload_data['parts']:
-                        if part.get('mimeType') == 'text/plain':
-                            return part.get('body', {}).get('data', '')
-                        elif 'parts' in part:
-                            extracted = extract_body(part)
-                            if extracted: return extracted
-                else:
-                    return payload_data.get('body', {}).get('data', '')
-                return None
+                queue = [payload_data]
+                html_data = ""
+                while queue:
+                    curr = queue.pop(0)
+                    if 'parts' in curr:
+                        queue.extend(curr['parts'])
+                    else:
+                        mime = curr.get('mimeType')
+                        bdata = curr.get('body', {}).get('data', '')
+                        if mime == 'text/plain' and bdata:
+                            return bdata
+                        elif mime == 'text/html' and bdata:
+                            html_data = bdata
+                return html_data if html_data else payload_data.get('body', {}).get('data', '')
                 
             body_data = extract_body(payload)
             if body_data:
