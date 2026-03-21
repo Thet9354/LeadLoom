@@ -33,6 +33,7 @@ def _extract_notion_db_id(raw_id: str) -> str:
 def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> dict:
     """
     Creates a new lead entry in the specified Notion Database.
+    Dynamically queries the DB schema first, then only sets properties that exist.
     
     Args:
         database_id: The ID of the Notion Database to insert into.
@@ -49,80 +50,96 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
     client = notion_client.Client(auth=token)
     
     try:
+        # 1. Query the database schema to find which properties actually exist
+        db_info = client.databases.retrieve(database_id=clean_db_id)
+        db_props = db_info.get("properties", {})
+        existing_props = set(db_props.keys())
+        print(f"  [Notion] DB properties found: {sorted(existing_props)}")
+        
+        # 2. Find the title property (it might not be called "Name")
+        title_prop_name = "Name"
+        for prop_name, prop_info in db_props.items():
+            if prop_info.get("type") == "title":
+                title_prop_name = prop_name
+                break
+        
+        # 3. Build properties dict — only include properties that exist in the DB
+        properties = {}
+        
+        # Title property (required — always set)
+        properties[title_prop_name] = {
+            "title": [{"text": {"content": lead_data.get("name", "Unknown Lead")}}]
+        }
+        
+        # Email
+        if "Email" in existing_props:
+            properties["Email"] = {"email": lead_data.get("email", "")}
+        
+        # Company (rich_text)
+        if "Company" in existing_props:
+            properties["Company"] = {
+                "rich_text": [{"text": {"content": lead_data.get("company", "")}}]
+            }
+        
+        # Context / Hook (rich_text) — might be called "Context" or "Hook"
+        context_val = lead_data.get("context", "")
+        if "Context" in existing_props:
+            properties["Context"] = {
+                "rich_text": [{"text": {"content": context_val}}]
+            }
+        elif "Hook" in existing_props:
+            properties["Hook"] = {
+                "rich_text": [{"text": {"content": context_val}}]
+            }
+        
+        # Priority (select)
+        if "Priority" in existing_props:
+            properties["Priority"] = {
+                "select": {"name": lead_data.get("priority", "Medium")}
+            }
+        
+        # Lead Source / Acquisition Channel (multi_select)
+        source_val = lead_data.get("lead_source", ["Unknown"])
+        if "Lead Source" in existing_props:
+            properties["Lead Source"] = {
+                "multi_select": [{"name": src} for src in source_val]
+            }
+        elif "Acquisition Channel" in existing_props:
+            properties["Acquisition Channel"] = {
+                "multi_select": [{"name": src} for src in source_val]
+            }
+        
+        # Lead Stage / Lead Status (select)
+        stage_val = lead_data.get("lead_stage", "New Inbound")
+        if "Lead Stage" in existing_props:
+            properties["Lead Stage"] = {"select": {"name": stage_val}}
+        elif "Lead Status" in existing_props:
+            properties["Lead Status"] = {"select": {"name": stage_val}}
+        
+        # Value (rich_text)
+        if "Value" in existing_props:
+            properties["Value"] = {
+                "rich_text": [{"text": {"content": lead_data.get("value", "Unknown")}}]
+            }
+        
+        # Pain Point (rich_text)
+        if "Pain Point" in existing_props:
+            properties["Pain Point"] = {
+                "rich_text": [{"text": {"content": lead_data.get("pain_point", "None identified")}}]
+            }
+        
+        # Next Steps (rich_text)  
+        if "Next Steps" in existing_props:
+            properties["Next Steps"] = {
+                "rich_text": [{"text": {"content": lead_data.get("next_steps", "")}}]
+            }
+        
+        print(f"  [Notion] Setting properties: {sorted(properties.keys())}")
+        
+        # 4. Create the page
         new_page = client.pages.create(
             parent={"database_id": clean_db_id},
-            properties={
-                "Name": {
-                    "title": [
-                        {
-                            "text": {
-                                "content": lead_data.get("name", "Unknown Lead")
-                            }
-                        }
-                    ]
-                },
-                "Email": {
-                    "email": lead_data.get("email", "")
-                },
-                "Company": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("company", "")
-                            }
-                        }
-                    ]
-                },
-                "Context": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("context", "")
-                            }
-                        }
-                    ]
-                },
-                "Priority": {
-                    "select": {
-                        "name": lead_data.get("priority", "Medium")
-                    }
-                },
-                "Lead Source": {
-                    "multi_select": [{"name": src} for src in lead_data.get("lead_source", ["Unknown"])]
-                },
-                "Lead Stage": {
-                    "select": {
-                        "name": lead_data.get("lead_stage", "New Inbound")
-                    }
-                },
-                "Value": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("value", "Unknown")
-                            }
-                        }
-                    ]
-                },
-                "Pain Point": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("pain_point", "None identified")
-                            }
-                        }
-                    ]
-                },
-                "Next Steps": {
-                    "rich_text": [
-                        {
-                            "text": {
-                                "content": lead_data.get("next_steps", "")
-                            }
-                        }
-                    ]
-                }
-            }
+            properties=properties
         )
         return {"success": True, "page_id": new_page["id"]}
     except Exception as e:
