@@ -817,7 +817,7 @@ async def trigger_notion_debug(request: Request):
         client = notion_client.Client(auth=notion_token)
         db_info = client.databases.retrieve(database_id=clean_db_id)
         
-        return {"status": "success", "db_props": db_info.get("properties", {})}
+        return {"status": "success", "db_info": db_info}
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
