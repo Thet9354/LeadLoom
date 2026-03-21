@@ -81,7 +81,7 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
                 "rich_text": [{"text": {"content": lead_data.get("company", "")}}]
             }
         
-        # Context / Hook (rich_text) — might be called "Context" or "Hook"
+        # Context / Hook (rich_text) — might be called "Context", "Hook", or "AI Intelligence 🧠"
         context_val = lead_data.get("context", "")
         if "Context" in existing_props:
             properties["Context"] = {
@@ -89,6 +89,10 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
             }
         elif "Hook" in existing_props:
             properties["Hook"] = {
+                "rich_text": [{"text": {"content": context_val}}]
+            }
+        elif "AI Intelligence 🧠" in existing_props:
+            properties["AI Intelligence 🧠"] = {
                 "rich_text": [{"text": {"content": context_val}}]
             }
         
@@ -117,9 +121,14 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
             properties["Lead Status"] = {"select": {"name": stage_val}}
         
         # Value (rich_text)
+        value_text = lead_data.get("value", "Unknown")
         if "Value" in existing_props:
             properties["Value"] = {
-                "rich_text": [{"text": {"content": lead_data.get("value", "Unknown")}}]
+                "rich_text": [{"text": {"content": value_text}}]
+            }
+        elif "Potential Revenue" in existing_props:
+            properties["Potential Revenue"] = {
+                "rich_text": [{"text": {"content": value_text}}]
             }
         
         # Pain Point (rich_text)
