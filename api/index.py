@@ -806,7 +806,13 @@ async def trigger_notion_debug(request: Request):
             
         user = data[0]
         notion_token = decrypt(user["notion_api_key"]) if user.get("notion_api_key") else os.environ.get("NOTION_API_KEY")
-        clean_db_id = user["notion_db_id"].replace("-", "")
+        
+        import re
+        raw_id = user["notion_db_id"]
+        clean_db_id = raw_id.strip().split("?v=")[0]
+        if '/' in clean_db_id:
+            clean_db_id = clean_db_id.split('/')[-1]
+        clean_db_id = clean_db_id.replace("-", "")
         
         client = notion_client.Client(auth=notion_token)
         db_info = client.databases.retrieve(database_id=clean_db_id)
