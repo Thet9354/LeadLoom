@@ -765,6 +765,32 @@ async def poll_inbox():
         print(f"Sync Worker Error: {e}")
         return JSONResponse(status_code=500, content={"error": str(e)})
 
+@app.get("/api/poll-debug")
+async def trigger_sync_debug(request: Request):
+    """Triggers the sync worker and returns the complete console output for debugging."""
+    from api.worker import run_all_syncs
+    import asyncio
+    import io
+    import sys
+    
+    # Capture stdout securely for this request
+    old_stdout = sys.stdout
+    new_stdout = io.StringIO()
+    sys.stdout = new_stdout
+    
+    try:
+        print("--- DEBUG SYNC STARTED ---")
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, run_all_syncs)
+        output = new_stdout.getvalue()
+        return {"status": "success", "logs": output}
+    except Exception as e:
+        print(f"\nCRITICAL ERROR: {e}")
+        output = new_stdout.getvalue()
+        return JSONResponse(status_code=500, content={"error": str(e), "logs": output})
+    finally:
+        sys.stdout = old_stdout
+
 @app.get("/api/auth/check-email")
 async def check_email(email: str):
     """Check if an email exists in profiles — used by Google login gatekeeper."""

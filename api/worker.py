@@ -228,6 +228,9 @@ def run_all_syncs():
                   """
                   try:
                       print(f"    [AI] Analyzing email: \"{email.get('subject', 'No Subject')}\"")
+                      body_sample = email.get('body', '')[:150].replace('\n', ' ')
+                      print(f"    [AI] Extracted Body (first 150 chars): {body_sample!r}")
+                      
                       response = ai_client.models.generate_content(
                           model='gemini-2.5-flash',
                           contents=prompt
@@ -235,6 +238,7 @@ def run_all_syncs():
                       import re
                       response.resolve() # Ensure the full text is available stream
                       ai_text = response.text
+                      print(f"    [AI] Raw Gemini Output:\n{ai_text}\n    [AI] --- End Output ---")
                       
                       # Robust regex parsing to handle markdown bolding e.g., "**COMPANY:** Value" or "**COMPANY**: Value"
                       def extract_field(field_name, text, default=""):
