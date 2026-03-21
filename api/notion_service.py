@@ -58,7 +58,10 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
         if not db_info.get("properties") and db_info.get("data_sources"):
             source_id = db_info["data_sources"][0]["id"]
             print(f"  [Notion] Detected Linked View. Fetching schema from source DB: {source_id}")
-            db_info = client.databases.retrieve(database_id=source_id)
+            try:
+                db_info = client.databases.retrieve(database_id=source_id)
+            except Exception as e:
+                print(f"  [Notion] Could not read source DB schema (permissions issue?). Falling back to standard template properties. Error: {e}")
             
         db_props = db_info.get("properties", {})
         
@@ -68,7 +71,9 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
         
         # Helper to get the actual property name safely
         def get_prop(name):
-            return normalized_props.get(name.lower())
+            if normalized_props:
+                return normalized_props.get(name.lower())
+            return name # Fallback explicitly to the requested name if schema is totally hidden
         
         # 2. Find the title property (it might not be called "Name")
         title_prop_name = "Name"
