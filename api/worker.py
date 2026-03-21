@@ -236,7 +236,6 @@ def run_all_syncs():
                           contents=prompt
                       )
                       import re
-                      response.resolve() # Ensure the full text is available stream
                       ai_text = response.text
                       print(f"    [AI] Raw Gemini Output:\n{ai_text}\n    [AI] --- End Output ---")
                       
