@@ -53,8 +53,14 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
         # 1. Query the database schema to find which properties actually exist
         db_info = client.databases.retrieve(database_id=clean_db_id)
         db_props = db_info.get("properties", {})
-        existing_props = set(db_props.keys())
-        print(f"  [Notion] DB properties found: {sorted(existing_props)}")
+        
+        # Create a normalized map: "lowercase stripped name" -> "Actual Exact Name"
+        normalized_props = {k.strip().lower(): k for k in db_props.keys()}
+        print(f"  [Notion] DB properties normalized: {list(normalized_props.keys())}")
+        
+        # Helper to get the actual property name safely
+        def get_prop(name):
+            return normalized_props.get(name.lower())
         
         # 2. Find the title property (it might not be called "Name")
         title_prop_name = "Name"
@@ -63,87 +69,72 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
                 title_prop_name = prop_name
                 break
         
-        # 3. Build properties dict — only include properties that exist in the DB
+        # 3. Build properties dict
         properties = {}
         
-        # Title property (required — always set)
+        # Title property (required)
         properties[title_prop_name] = {
-            "title": [{"text": {"content": lead_data.get("name", "Unknown Lead")}}]
+            "title": [{"text": {"content": lead_data.get("name", "Unknown Lead")[:2000]}}]
         }
         
-        # Email
-        if "Email" in existing_props:
-            properties["Email"] = {"email": lead_data.get("email", "")}
+        email_prop = get_prop("Email")
+        if email_prop:
+            val = lead_data.get("email", "")
+            if val: properties[email_prop] = {"email": val}
         
-        # Company (rich_text)
-        if "Company" in existing_props:
-            properties["Company"] = {
-                "rich_text": [{"text": {"content": lead_data.get("company", "")}}]
-            }
-        
-        # Context / Hook (rich_text) — might be called "Context", "Hook", or "AI Intelligence 🧠"
-        context_val = lead_data.get("context", "")
-        if "Context" in existing_props:
-            properties["Context"] = {
-                "rich_text": [{"text": {"content": context_val}}]
-            }
-        elif "Hook" in existing_props:
-            properties["Hook"] = {
-                "rich_text": [{"text": {"content": context_val}}]
-            }
-        elif "AI Intelligence 🧠" in existing_props:
-            properties["AI Intelligence 🧠"] = {
-                "rich_text": [{"text": {"content": context_val}}]
+        company_prop = get_prop("Company")
+        if company_prop:
+            properties[company_prop] = {
+                "rich_text": [{"text": {"content": lead_data.get("company", "")[:2000]}}]
             }
         
-        # Priority (select)
-        if "Priority" in existing_props:
-            properties["Priority"] = {
-                "select": {"name": lead_data.get("priority", "Medium")}
+        # Context / Hook / AI Intelligence 🧠
+        context_prop = get_prop("AI Intelligence 🧠") or get_prop("Context") or get_prop("Hook")
+        if context_prop:
+            properties[context_prop] = {
+                "rich_text": [{"text": {"content": lead_data.get("context", "")[:2000]}}]
             }
         
-        # Lead Source / Acquisition Channel (multi_select)
-        source_val = lead_data.get("lead_source", ["Unknown"])
-        if "Lead Source" in existing_props:
-            properties["Lead Source"] = {
-                "multi_select": [{"name": src} for src in source_val]
-            }
-        elif "Acquisition Channel" in existing_props:
-            properties["Acquisition Channel"] = {
-                "multi_select": [{"name": src} for src in source_val]
-            }
+        priority_prop = get_prop("Priority")
+        if priority_prop:
+            val = lead_data.get("priority", "Medium")
+            # Ensure it fits within Notion's 100 char limit for selects
+            properties[priority_prop] = {"select": {"name": val[:100]}}
         
-        # Lead Stage / Lead Status (select)
-        stage_val = lead_data.get("lead_stage", "New Inbound")
-        if "Lead Stage" in existing_props:
-            properties["Lead Stage"] = {"select": {"name": stage_val}}
-        elif "Lead Status" in existing_props:
-            properties["Lead Status"] = {"select": {"name": stage_val}}
-        
-        # Value (rich_text)
-        value_text = lead_data.get("value", "Unknown")
-        if "Value" in existing_props:
-            properties["Value"] = {
-                "rich_text": [{"text": {"content": value_text}}]
+        # Lead Source / Acquisition Channel
+        source_prop = get_prop("Acquisition Channel") or get_prop("Lead Source")
+        if source_prop:
+            sources = lead_data.get("lead_source", ["Unknown"])
+            properties[source_prop] = {
+                "multi_select": [{"name": src[:100]} for src in sources]
             }
-        elif "Potential Revenue" in existing_props:
-            properties["Potential Revenue"] = {
-                "rich_text": [{"text": {"content": value_text}}]
+            
+        # Lead Stage / Lead Status
+        stage_prop = get_prop("Lead Stage") or get_prop("Lead Status")
+        if stage_prop:
+            val = lead_data.get("lead_stage", "New Inbound")
+            properties[stage_prop] = {"select": {"name": val[:100]}}
+            
+        # Value / Potential Revenue
+        value_prop = get_prop("Potential Revenue") or get_prop("Value")
+        if value_prop:
+            properties[value_prop] = {
+                "rich_text": [{"text": {"content": lead_data.get("value", "Unknown")[:2000]}}]
             }
-        
-        # Pain Point (rich_text)
-        if "Pain Point" in existing_props:
-            properties["Pain Point"] = {
-                "rich_text": [{"text": {"content": lead_data.get("pain_point", "None identified")}}]
+            
+        pain_prop = get_prop("Pain Point")
+        if pain_prop:
+            properties[pain_prop] = {
+                "rich_text": [{"text": {"content": lead_data.get("pain_point", "None identified")[:2000]}}]
             }
-        
-        # Next Steps (rich_text)  
-        if "Next Steps" in existing_props:
-            properties["Next Steps"] = {
-                "rich_text": [{"text": {"content": lead_data.get("next_steps", "")}}]
+            
+        next_prop = get_prop("Next Steps")
+        if next_prop:
+            properties[next_prop] = {
+                "rich_text": [{"text": {"content": lead_data.get("next_steps", "")[:2000]}}]
             }
-        
-        print(f"  [Notion] Setting properties: {sorted(properties.keys())}")
+            
+        print(f"  [Notion] Setting properties: {list(properties.keys())}")
         
         # 4. Create the page
         new_page = client.pages.create(

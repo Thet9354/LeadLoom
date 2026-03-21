@@ -236,10 +236,14 @@ def run_all_syncs():
                       response.resolve() # Ensure the full text is available stream
                       ai_text = response.text
                       
-                      # Robust regex parsing to handle markdown bolding e.g., "**COMPANY:** Value"
+                      # Robust regex parsing to handle markdown bolding e.g., "**COMPANY:** Value" or "**COMPANY**: Value"
                       def extract_field(field_name, text, default=""):
-                          match = re.search(rf"(?i)\**{field_name}:\**\s*(.*)", text)
-                          return match.group(1).strip() if match else default
+                          match = re.search(rf"(?i)\**{field_name}\**\s*:\s*\**\s*(.*)", text)
+                          if not match: return default
+                          val = match.group(1).strip()
+                          # Remove bolding around the value if Gemini did "**Value**"
+                          val = re.sub(r"^\**|\**$", "", val).strip()
+                          return val
                       
                       status = extract_field("STATUS", ai_text, "NOT_LEAD").upper()
                       if "POSSIBLE_LEAD" in status: status = "POSSIBLE_LEAD"
