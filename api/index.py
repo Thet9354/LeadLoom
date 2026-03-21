@@ -791,6 +791,30 @@ async def trigger_sync_debug(request: Request):
     finally:
         sys.stdout = old_stdout
 
+@app.get("/api/notion-debug")
+async def trigger_notion_debug(request: Request):
+    """Fetches the actual Notion schema for the first active synced user."""
+    from api.database import supabase, decrypt
+    import notion_client
+    import os
+    
+    try:
+        query = supabase.table("integrations").select("user_id, notion_db_id, notion_api_key").not_.is_("notion_db_id", "null").execute()
+        data = query.data
+        if not data:
+            return {"error": "No active users found with Notion DBs"}
+            
+        user = data[0]
+        notion_token = decrypt(user["notion_api_key"]) if user.get("notion_api_key") else os.environ.get("NOTION_API_KEY")
+        clean_db_id = user["notion_db_id"].replace("-", "")
+        
+        client = notion_client.Client(auth=notion_token)
+        db_info = client.databases.retrieve(database_id=clean_db_id)
+        
+        return {"status": "success", "db_props": db_info.get("properties", {})}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
 @app.get("/api/auth/check-email")
 async def check_email(email: str):
     """Check if an email exists in profiles — used by Google login gatekeeper."""
