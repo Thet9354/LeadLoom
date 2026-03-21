@@ -232,31 +232,33 @@ def run_all_syncs():
                           model='gemini-2.5-flash',
                           contents=prompt
                       )
-                      lines = response.text.split('\n')
-                      for line in lines:
-                          line = line.strip()
-                          if line.startswith("STATUS:"):
-                              status = line.replace("STATUS:", "").strip()
-                          elif line.startswith("REASON:"):
-                              reason = line.replace("REASON:", "").strip()
-                          elif line.startswith("COMPANY:"):
-                              company = line.replace("COMPANY:", "").strip()
-                          elif line.startswith("PRIORITY:"):
-                              priority = line.replace("PRIORITY:", "").strip()
-                          elif line.startswith("LEAD_SOURCE:"):
-                              val = line.replace("LEAD_SOURCE:", "").strip()
-                              # Parse comma separated for Multi-Select
-                              lead_source = [src.strip() for src in val.split(',') if src.strip()]
-                          elif line.startswith("LEAD_STAGE:"):
-                              lead_stage = line.replace("LEAD_STAGE:", "").strip()
-                          elif line.startswith("VALUE:"):
-                              value = line.replace("VALUE:", "").strip()
-                          elif line.startswith("PAIN_POINT:"):
-                              pain_point = line.replace("PAIN_POINT:", "").strip()
-                          elif line.startswith("NEXT_STEPS:"):
-                              next_steps = line.replace("NEXT_STEPS:", "").strip()
-                          elif line.startswith("HOOK:"):
-                              hook = line.replace("HOOK:", "").strip()
+                      import re
+                      response.resolve() # Ensure the full text is available stream
+                      ai_text = response.text
+                      
+                      # Robust regex parsing to handle markdown bolding e.g., "**COMPANY:** Value"
+                      def extract_field(field_name, text, default=""):
+                          match = re.search(rf"(?i)\**{field_name}:\**\s*(.*)", text)
+                          return match.group(1).strip() if match else default
+                      
+                      status = extract_field("STATUS", ai_text, "NOT_LEAD").upper()
+                      if "POSSIBLE_LEAD" in status: status = "POSSIBLE_LEAD"
+                      elif "NOT_LEAD" in status: status = "NOT_LEAD"
+                      else: status = "LEAD"
+                      
+                      reason = extract_field("REASON", ai_text)
+                      company = extract_field("COMPANY", ai_text, "Unknown Company")
+                      priority = extract_field("PRIORITY", ai_text, "Medium")
+                      
+                      source_str = extract_field("LEAD_SOURCE", ai_text, "LeadLooms Website")
+                      lead_source = [src.strip() for src in source_str.split(',') if src.strip()]
+                      
+                      lead_stage = extract_field("LEAD_STAGE", ai_text, "New Inbound")
+                      value = extract_field("VALUE", ai_text, "Unknown")
+                      pain_point = extract_field("PAIN_POINT", ai_text, "None identified")
+                      next_steps = extract_field("NEXT_STEPS", ai_text, "Review inquiry")
+                      hook = extract_field("HOOK", ai_text)
+                      
                   except Exception as e:
                       print(f"  [!] Gemini Error: {e}")
                       company = "Pending Parsing"
@@ -266,7 +268,7 @@ def run_all_syncs():
              # Process based on STATUS
              if status == "NOT_LEAD":
                  print(f"    - Skipping non-lead from {sender_email}. Reason: {reason}")
-                 # Still remove label so we don't process it again
+                 # Remove label so it doesn't stay unread and get re-processed
                  remove_unread_label(gmail_service, email["id"])
                  continue
                  
