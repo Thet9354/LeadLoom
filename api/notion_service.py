@@ -52,6 +52,14 @@ def create_lead(database_id: str, lead_data: dict, auth_token: str = None) -> di
     try:
         # 1. Query the database schema to find which properties actually exist
         db_info = client.databases.retrieve(database_id=clean_db_id)
+        
+        # If the user provided a Linked Database View, it won't have properties.
+        # We must follow the data_source to the original database to get the schema.
+        if not db_info.get("properties") and db_info.get("data_sources"):
+            source_id = db_info["data_sources"][0]["id"]
+            print(f"  [Notion] Detected Linked View. Fetching schema from source DB: {source_id}")
+            db_info = client.databases.retrieve(database_id=source_id)
+            
         db_props = db_info.get("properties", {})
         
         # Create a normalized map: "lowercase stripped name" -> "Actual Exact Name"
