@@ -193,34 +193,43 @@ def run_all_syncs():
 
                   domain_type = "a business domain" if is_business_domain else "a personal/free domain"
                   prompt = f"""
-                 You are an expert Sales Development Representative (SDR) evaluating inbound emails.
-                 Analyze the following email from a potential lead. The sender is using {domain_type}.
+                 Role: You are a senior Sales Development Representative for an elite company.
+                 Analyze the following email from a sender using {domain_type}.
                  {brand_ctx}
                  
-                 Determine if this is a genuine lead inquiring about our services/products, 
-                 a possible lead (ambiguous but worth checking), or not a lead (spam, promotion, newsletter, internal, irrelevant).
-                 CRITICAL RULE: If the email is a newsletter, promotional offer TO us, automated receipt, marketing material, or vendor pitch, you MUST output STATUS: NOT_LEAD.
+                 Stage A (The Gatekeeper): Determine if the email is a LEAD or NOT_LEAD based on the user's qualified lead profile.
+                 - NOT_LEAD Criteria: Cold pitches TO the user (SEO, Trademark, Ads), generic newsletters, automated receipts, or "Thank you" notes.
+                 - LEAD Criteria: Inquiries about pricing, features, partnerships, or meeting requests.
                  
-                 Extract their company name (if obvious, else "Unknown Company").
-                 Create a personalized 'Hook' sentence to use in a reply (e.g., "I saw you're interested in XYZ...").
+                 Stage B (The Router): If it is a LEAD, assign exactly ONE of these 9 stages based on the email content:
+                 - Meeting Booked: If it's a Calendly/booking confirmation.
+                 - Negotiating: If they ask about pricing, "Pro Tier", or upgrades.
+                 - Needs Research: If they have complex technical questions (e.g., "Webflow integration?").
+                 - Emailed / Attempted: If the subject starts with "RE:" (detected follow-up).
+                 - Onboarding: If they mention having just paid or need account setup help.
+                 - Disqualified: If they explicitly say "Not interested" or "Stop."
+                 - New Inbound: Default for fresh, non-specific inquiries.
+                 (The remaining two stages are "Closed Won" and "Closed Lost").
                  
-                 Also extract or estimate the following 6 data points:
-                 - PRIORITY: Must be exactly "High", "Medium", or "Low" (High = ready to buy/book demo, Low = just asking questions/partnerships)
-                 - LEAD_SOURCE: [Comma-separated list, e.g., "Google" or "Referral". If no source is mentioned, you MUST output exactly "LeadLooms Website"]
-                 - LEAD_STAGE: Evaluate the email and pick exactly ONE of these 9 stages: "New Inbound", "Needs Research", "Emailed / Attempted", "Meeting Booked", "Negotiating", "Onboarding", "Closed Won", "Closed Lost", "Disqualified". (RULES: If the subject contains "RE:" or they ask about pricing/customization, pick "Negotiating". If it's a Calendly booking, pick "Meeting Booked". Otherwise, default to "New Inbound").
-                 - VALUE: [Mentioned budget, team size, e.g., "200 seats", "$5,000", or "Unknown"]
-                 - PAIN_POINT: [What problem are they trying to solve?]
-                 - NEXT_STEPS: [Actionable next step for the sales rep]
-                                  Return the output STRICTLY in this JSON-like key-value format exactly:
-                  STATUS: [LEAD | POSSIBLE_LEAD | NOT_LEAD]
+                 Additional Extractions if LEAD:
+                 - Extract their company name (if obvious, else "Unknown Company").
+                 - Determine PRIORITY: "High", "Medium", or "Low".
+                 - Identify LEAD_SOURCE: If no source is mentioned, output exactly "LeadLooms Website".
+                 - Estimate Potential Revenue (VALUE): (e.g., "$19/mo" or "15 SDR seats") or set as "(Stealth Mode)".
+                 - Extract PAIN_POINT: Max 2 bullet points (scannable for Notion).
+                 - Extract NEXT_STEPS: Max 2 bullet points (scannable for Notion).
+                 - HOOK: Create a personalized 'Hook' sentence to use in a reply.
+                 
+                 Return the output STRICTLY in this JSON-like key-value format exactly:
+                  STATUS: [LEAD | NOT_LEAD]
                   REASON: [Short explanation of why]
                   COMPANY: [Company Name]
                   PRIORITY: [Priority Level]
                   LEAD_SOURCE: [Source]
                   LEAD_STAGE: [Chosen Stage]
-                  VALUE: [Estimated Value or Size]
-                  PAIN_POINT: [Pain Point]
-                  NEXT_STEPS: [Next Steps]
+                  VALUE: [Estimated Potential Revenue or (Stealth Mode)]
+                  PAIN_POINT: [Max 2 bullet points]
+                  NEXT_STEPS: [Max 2 bullet points]
                   HOOK: [Your Hook]
 
                   Subject: {email.get("subject", "")}
@@ -249,8 +258,7 @@ def run_all_syncs():
                           return val
                       
                       status = extract_field("STATUS", ai_text, "NOT_LEAD").upper()
-                      if "POSSIBLE_LEAD" in status: status = "POSSIBLE_LEAD"
-                      elif "NOT_LEAD" in status: status = "NOT_LEAD"
+                      if "NOT_LEAD" in status: status = "NOT_LEAD"
                       else: status = "LEAD"
                       
                       reason = extract_field("REASON", ai_text)
@@ -261,7 +269,7 @@ def run_all_syncs():
                       lead_source = [src.strip() for src in source_str.split(',') if src.strip()]
                       
                       lead_stage = extract_field("LEAD_STAGE", ai_text, "New Inbound")
-                      value = extract_field("VALUE", ai_text, "Unknown")
+                      value = extract_field("VALUE", ai_text, "(Stealth Mode)")
                       pain_point = extract_field("PAIN_POINT", ai_text, "None identified")
                       next_steps = extract_field("NEXT_STEPS", ai_text, "Review inquiry")
                       hook = extract_field("HOOK", ai_text)
@@ -278,10 +286,6 @@ def run_all_syncs():
                  # Remove label so it doesn't stay unread and get re-processed
                  remove_unread_label(gmail_service, email["id"])
                  continue
-                 
-             if status == "POSSIBLE_LEAD":
-                 print(f"    - Potential lead identified: {sender_email}")
-                 hook = f"[POSSIBLE LEAD] Reason: {reason}\n\n{hook}"
 
              lead_data = {
                  "name": raw_sender,
@@ -314,7 +318,7 @@ def run_all_syncs():
                       summary_parts.append(f"Company: {company}")
                   if reason:
                       summary_parts.append(reason)
-                  if hook and not hook.startswith("[POSSIBLE LEAD]"):
+                  if hook:
                       summary_parts.append(hook[:120])
                   ai_summary = " — ".join(summary_parts) if summary_parts else ""
                   insert_sync_log(user_id=user_id, lead_email=sender_email, summary=ai_summary)
