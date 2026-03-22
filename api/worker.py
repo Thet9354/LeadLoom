@@ -194,20 +194,30 @@ def run_all_syncs():
                   domain_type = "a business domain" if is_business_domain else "a personal/free domain"
                   prompt = f"""
                  Role: You are a senior Sales Development Representative for an elite company.
+                 Brand DNA: We are "Dibs", an automated booking SaaS.
+                 Keyword Sensitivity: The keywords "automated", "booking", "fast", "discount", "slots" are high-signal triggers. If these appear, the email is almost certainly a LEAD.
+                 
                  Analyze the following email from a sender using {domain_type}.
                  {brand_ctx}
                  
-                 Stage A (The Gatekeeper): Determine if the email is a LEAD or NOT_LEAD based on the user's qualified lead profile.
+                 Step 1: Reasoning (Chain of Thought)
+                 Before outputting the final JSON, write a short thought process explaining why this email is a LEAD or NOT_LEAD.
+
+                 Stage A (The Gatekeeper): Determine if the email is a LEAD or NOT_LEAD.
+                 - LEAD Criteria:
+                   * Commercial Intent: Pricing, plans, or "pulling the trigger".
+                   * Strategic Intent: Partnership inquiries, affiliate offers, or integration requests.
+                   * Product Feedback: Even if they say "No" or "Not for us," this is a LEAD. The founder needs to see why people are saying no to improve Dibs.
+                   * Technical Inquiries: Questions about Webflow, APIs, or specific "slots" logic.
                  - NOT_LEAD Criteria: Cold pitches TO the user (SEO, Trademark, Ads), generic newsletters, automated receipts, or "Thank you" notes.
-                 - LEAD Criteria: Inquiries about pricing, features, partnerships, or meeting requests.
                  
                  Stage B (The Router): If it is a LEAD, assign exactly ONE of these 9 stages based on the email content:
                  - Meeting Booked: If it's a Calendly/booking confirmation.
-                 - Negotiating: If they ask about pricing, "Pro Tier", or upgrades.
-                 - Needs Research: If they have complex technical questions (e.g., "Webflow integration?").
+                 - Negotiating: Use this for ANY mention of pricing, discounts, or "Pro" features.
+                 - Needs Research: Use this for technical "Can it do X?" questions.
                  - Emailed / Attempted: If the subject starts with "RE:" (detected follow-up).
                  - Onboarding: If they mention having just paid or need account setup help.
-                 - Disqualified: If they explicitly say "Not interested" or "Stop."
+                 - Disqualified: Use this for "Not interested" or "Stop." (Crucial: These must still have STATUS: LEAD so they sync to Notion).
                  - New Inbound: Default for fresh, non-specific inquiries.
                  (The remaining two stages are "Closed Won" and "Closed Lost").
                  
@@ -220,9 +230,11 @@ def run_all_syncs():
                  - Extract NEXT_STEPS: Max 2 bullet points (scannable for Notion).
                  - HOOK: Create a personalized 'Hook' sentence to use in a reply.
                  
-                 Return the output STRICTLY in this JSON-like key-value format exactly:
+                 Return the output STRICTLY in this format exactly:
+                 [Your Chain of Thought Reasoning Here]
+                 ---
                   STATUS: [LEAD | NOT_LEAD]
-                  REASON: [Short explanation of why]
+                  REASON: [Short explanation of why, explicitly mentioning which "Dibs" keyword or intent triggered the classification]
                   COMPANY: [Company Name]
                   PRIORITY: [Priority Level]
                   LEAD_SOURCE: [Source]
